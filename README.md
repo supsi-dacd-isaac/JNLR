@@ -1,2 +1,1 @@
-# JNLR
-Jax-based non-linear reconciliation and learning 
+# JNLR Jax-based non-linear reconciliation and learning 

@@ -1,0 +1,44 @@
+site_name: JNLR
+site_url: https://supsi-dacd-isaac.github.io/JNLR/
+repo_url: https://github.com/supsi-dacd-isaac/JNLR
+theme:
+  name: material
+  features:
+    - content.code.copy        # copy button on code blocks
+    - navigation.tabs          # nice top tabs
+    - navigation.instant       # “instant” page transitions
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          # Make src-layout work everywhere, even in CI:
+          paths: ["."]
+          options:
+            # Docstring parsing & rendering:
+            docstring_style: google   # also supports 'numpy', 'sphinx', or 'auto'
+            docstring_section_style: table
+            docstring_options:
+              trim_doctest_flags: true
+            # Signatures & types:
+            show_signature_annotations: true
+            separate_signature: true
+            # Member selection (hide _private stuff by default):
+            filters: public
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-chtml.js
+nav:
+  - Home: index.md
+  - API:
+      - Overview: api/index.md
+      - Reconcile: api/reconcile.md
+      - Should: api/should.md
+      - Stats: api/stats.md
+      - Curvature_utils: api/curvature_utils.md
