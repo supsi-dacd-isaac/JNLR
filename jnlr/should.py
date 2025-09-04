@@ -1,9 +1,8 @@
 from jax import numpy as jnp
 from functools import partial
 import jax
-from curvature_utils import min_tangent_eigenvalue, curvature_along_projection, min_tangent_eigenvalue_vv
-from jnlr.reconcile import make_solver
-from stats import clopper_pearson_intervals
+from jnlr.utils.curvature_utils import min_tangent_eigenvalue, min_tangent_eigenvalue_vv
+from jnlr.stats import clopper_pearson_intervals
 
 @partial(jax.jit, static_argnames=('f', 'grad_f', 'hessian_f', 'vmapped_solver'))
 def constant_sign_curvature(f, grad_f, hessian_f, vmapped_solver, z_hat: jnp.ndarray) -> jnp.ndarray:
@@ -38,7 +37,7 @@ def constant_sign_curvature(f, grad_f, hessian_f, vmapped_solver, z_hat: jnp.nda
 
 
 
-@partial(jax.jit, static_argnames=('jacobian_F', 'hessians_F', 'vmapped_solver'))
+@partial(jax.jit, static_argnames=('f', 'jacobian_F', 'hessians_F', 'vmapped_solver'))
 def vector_valued_convex(f, jacobian_F, hessians_F, vmapped_solver, z_hat: jnp.ndarray) -> jnp.ndarray:
     r"""
     Generalization of scalar curvature condition to vector-valued case.
@@ -159,4 +158,3 @@ def p_reduction_and_intervals(vmapped_solver, z_hat: jnp.ndarray, z_hat_samples:
     intervals = jax.vmap(clopper_pearson_intervals, in_axes=(0, None, None))(jnp.nansum(condition, axis=-1),
                                                                              condition.shape[-1], alpha)
     return jnp.nanmean(condition, axis=-1), intervals, delta_pi
-

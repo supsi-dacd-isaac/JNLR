@@ -61,7 +61,7 @@ def solve_lagrange_multipliers(J: jnp.ndarray,
     return jnp.linalg.solve(JJt_reg, rhs)   # λ ∈ R^m
 
 
-@partial(jax.jit, static_argnames=('jacobian_f', 'hessian_f'))
+@partial(jax.jit, static_argnames=('f', 'jacobian_f', 'hessian_f'))
 def min_tangent_eigenvalue_vv(f, jacobian_f, hessian_f,  z_tilde: jnp.ndarray, z_hat: jnp.ndarray, eps=1e-6) -> jnp.ndarray:
     r"""
     Generalization of min_tangent_eigenvalue to vector-valued constraint functions $F: R^n -> R^m$.

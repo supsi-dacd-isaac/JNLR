@@ -65,7 +65,7 @@ def f_shubert(v):
     for j in range(1, 6):
         total1 += j * jnp.cos((j + 1) * x1 + j)
         total2 += j * jnp.cos((j + 1) * x2 + j)
-    return total1 * total2
+    return total1 * total2 / 100
 
 
 # --------------------------------------------------------------------------------------------------------------------
