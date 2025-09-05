@@ -32,6 +32,57 @@ def f_impl(f_expl, n: int = None, m: int = None):
             u = jnp.reshape(u, (m,))  # enforce static (m,)
             return u - y
         return wrapped_vect
+#
+# def _try_call(f, x):
+#     try:
+#         return True, f(x)
+#     except Exception:
+#         return False, None
+#
+# def _equal_outs(y1, y2):
+#     # Works for array or scalar outputs; extend for pytrees if needed.
+#     if not (hasattr(y1, "shape") and hasattr(y2, "shape")):
+#         return False
+#     if y1.shape != y2.shape:
+#         return False
+#     return jnp.array_equal(jnp.asarray(y1), jnp.asarray(y2))
+#
+# def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=1024):
+#     # Finds the smallest `D` where:
+#     # 1) f(arange(D)) succeeds, and either
+#     # 2a) f(arange(D+1)) fails (exact-length functions), or
+#     # 2b) f(arange(D+1)) succeeds and output is stable, and
+#     #     f(arange(D-1)) either fails or is not yet stable.
+#     with jax.disable_jit():
+#         for D in range(1, max_dim):
+#             okD, yD = _try_call(f, jnp.arange(D, dtype=dtype))
+#             if not okD:
+#                 continue
+#
+#             # If D+1 fails, accept D (exact-length signature).
+#             okNext, yNext = _try_call(f, jnp.arange(D + 1, dtype=dtype))
+#             if not okNext:
+#                 return D
+#
+#             # If both D and D+1 succeed, require stabilization at D,
+#             # and non-stabilization at D-1 (or D-1 failing) for minimality.
+#             if _equal_outs(yD, yNext):
+#                 if D == 1:
+#                     return D
+#                 okPrev, yPrev = _try_call(f, jnp.arange(D - 1, dtype=dtype))
+#                 if (not okPrev) or (not _equal_outs(yPrev, yD)):
+#                     return D
+#
+#     raise ValueError("Could not infer minimal input size up to max_dim.")
+#
+# def infer_io_shapes(f, *, dtype=jnp.float32, d_input=None):
+#     if d_input is None:
+#         d_input = infer_min_input_size(f, dtype=dtype)
+#     out_aval = jax.eval_shape(f, jax.ShapeDtypeStruct((d_input,), dtype))
+#     return (d_input,), jnp.atleast_1d(f(jnp.arange(d_input, dtype=dtype))).shape
+
+
+LOOKAHEAD_CAP = 8  # how far to look ahead
 
 def _try_call(f, x):
     try:
@@ -47,7 +98,7 @@ def _equal_outs(y1, y2):
         return False
     return jnp.array_equal(jnp.asarray(y1), jnp.asarray(y2))
 
-def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=1024):
+def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=21):
     # Finds the smallest `D` where:
     # 1) f(arange(D)) succeeds, and either
     # 2a) f(arange(D+1)) fails (exact-length functions), or
@@ -55,17 +106,28 @@ def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=1024):
     #     f(arange(D-1)) either fails or is not yet stable.
     with jax.disable_jit():
         for D in range(1, max_dim):
-            okD, yD = _try_call(f, jnp.arange(D, dtype=dtype))
+            rand_daemon = jax.random.PRNGKey(0)
+            rd = jax.random.normal(rand_daemon, (1,))  # avoid being in pathological inputs like zero
+            okD, yD = _try_call(f, jnp.arange(D, dtype=dtype) + rd)
             if not okD:
                 continue
 
             # If D+1 fails, accept D (exact-length signature).
-            okNext, yNext = _try_call(f, jnp.arange(D + 1, dtype=dtype))
+            okNext, yNext = _try_call(f, jnp.arange(D + 1, dtype=dtype)+rd)
             if not okNext:
+                # look ahead for the next successful dimension
+                for D2 in range(D + 2, min(max_dim, D + 2 + LOOKAHEAD_CAP)):
+                    okD2, _ = _try_call(f, jnp.arange(D2, dtype=dtype)+rd)
+                    if okD2:
+                        return D2
+                return D  # fall back if nothing else works
+            if len(yD.shape) != len(yNext.shape):
+                # dimensionality changed, cannot be stable
                 return D
-
+            if len(yD.shape) > 1 and jnp.any(yD.shape[1:] != yNext.shape[1:]):
             # If both D and D+1 succeed, require stabilization at D,
             # and non-stabilization at D-1 (or D-1 failing) for minimality.
+                return D
             if _equal_outs(yD, yNext):
                 if D == 1:
                     return D
@@ -74,6 +136,7 @@ def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=1024):
                     return D
 
     raise ValueError("Could not infer minimal input size up to max_dim.")
+
 
 def infer_io_shapes(f, *, dtype=jnp.float32, d_input=None):
     if d_input is None:

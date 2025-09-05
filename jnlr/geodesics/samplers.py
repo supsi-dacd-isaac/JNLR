@@ -4,6 +4,39 @@ from jax import jacfwd
 
 from typing import Optional
 from jnlr.utils.function_utils import infer_io_shapes
+from jnlr.reconcile import make_solver_proj_nt_curv, make_solver, make_solver_alm_optax
+
+
+def chose_solvers(phi):
+    """
+    Try different solvers of increasing complexity until one works without NaNs.
+    Args:
+        phi ():
+
+    Returns:
+
+    """
+    for ms in [make_solver, make_solver_proj_nt_curv, make_solver_alm_optax]:
+        d_tot, d_out = infer_io_shapes(phi)
+        d_tot = d_tot[0]
+        solver = ms(phi, n_iterations=10, return_history=False, vmapped=False)
+        x0 = jnp.zeros((d_tot,), dtype=jnp.float32)
+        x0 = x0.at[:d_tot].set(jax.random.uniform(jax.random.PRNGKey(0), (d_tot,), minval=-1.0, maxval=1.0))
+        x0 = solver(x0)
+        keys = jax.random.split(jax.random.PRNGKey(0), 10)
+        sigma = 1e-2; lam=0.0; kappa=0.5; R=jnp.inf; newton_iters=6
+        J_phi = jax.jacfwd(phi)
+        nan_flag = False
+        for k in keys:
+            y = roi_langevin_step(k, x0, JF=J_phi, sigma=sigma, lam=lam, kappa=kappa, R=R, solver=solver)
+            if jnp.any(jnp.isnan(y)):
+                nan_flag = True
+                break
+        if nan_flag:
+            continue
+        else:
+            return solver, ms
+    raise ValueError("All solver methods resulted in NaNs.")
 
 def sqrtdet_G(J):
     # J: (..., D, d); G = J^T J
@@ -144,6 +177,7 @@ def build_tangent_ops_chol(x, JF):
 
 def build_tangent_ops_qr(x, JF):
     J = jnp.atleast_2d(JF(x))                         # (c, D)
+
     # Reduced QR of J^T gives an orthonormal basis of the normal space
     Q, R = jsp.linalg.qr(J.T, mode="economic")   # Q: (D, r), r = rank(J)
     def proj_vec(v): return v - Q @ (Q.T @ v)
@@ -153,19 +187,23 @@ def build_tangent_ops_qr(x, JF):
 
 def newton_project(x, F, JF, iters=6, method="chol"):
     def step(x,_):
-        J = jnp.atleast_2d(JF(x)); r = jnp.atleast_1d(F(x))                       # (c,D), (c,)
+        J = jnp.atleast_2d(JF(x))                  # (c, D)
+        res = jnp.atleast_1d(F(x))                 # (c,)
+
         if method == "qr":
-            # Solve (J J^T) lam = r via QR of J^T
+            # J^T = Q R, with Q: (D, k), R: (k, c), k = min(D, c)
             Q, R = jsp.linalg.qr(J.T, mode="economic")
-            lam = jsp.linalg.solve_triangular(R.T, Q.T @ r, lower=True)
+            # Solve (J J^T) lam = res => (R^T R) lam = res
+            y = jsp.linalg.solve_triangular(R, res, lower=False)  # R y = res
+            lam = jsp.linalg.solve_triangular(R.T, y, lower=True)  # R^T lam = y
         else:
             A = J @ J.T
-            lam = jsp.linalg.solve(A, r, assume_a="pos")
+            lam = jsp.linalg.solve(A, res, assume_a="pos")
         return x - J.T @ lam, None
     x, _ = jax.lax.scan(step, x, None, length=iters)
     return x
 
-def _clip_to_ball(x0, y, F, JF, R, iters=14):
+def _clip_to_ball(x0, y, solver, R, iters=14):
     def inside(z):
         return jnp.linalg.norm(z) <= R
 
@@ -176,21 +214,21 @@ def _clip_to_ball(x0, y, F, JF, R, iters=14):
         def body_fun(_, carry):
             lo, hi = carry
             mid = 0.5 * (lo + hi)
-            z = newton_project(x0 + mid * (y - x0), F, JF)
+            z = solver(x0 + mid * (y - x0))
             cond = inside(z)
             lo_new = jnp.where(cond, mid, lo)
             hi_new = jnp.where(cond, hi,  mid)
             return (lo_new, hi_new)
 
         lo, hi = jax.lax.fori_loop(0, iters, body_fun, (lo, hi))
-        return newton_project(x0 + lo * (y - x0), F, JF)
+        return solver(x0 + lo * (y - x0))
 
     # Pass operand `y` and make both branches accept it
     return jax.lax.cond(inside(y), lambda yy: yy, bisect, y)
 
-@partial(jax.jit, static_argnames=("F","JF","proj_method","newton_iters"))
-def roi_langevin_step(key, x, F, JF, *, sigma=1e-2, lam=0.0, kappa=0.0, R=jnp.inf,
-                      newton_iters=6, proj_method="chol"):
+@partial(jax.jit, static_argnames=("JF","proj_method", "solver"))
+def roi_langevin_step(key, x, JF, solver, *, sigma=1e-2, lam=0.0, kappa=0.0, R=jnp.inf,
+                      proj_method="chol"):
     # Build projector ops at current x (reuse within this step)
     build = build_tangent_ops_qr if proj_method == "qr" else build_tangent_ops_chol
     proj_vec, proj_mat = build(x, JF)
@@ -198,17 +236,20 @@ def roi_langevin_step(key, x, F, JF, *, sigma=1e-2, lam=0.0, kappa=0.0, R=jnp.in
     xi = jax.random.normal(key, x.shape)     # ambient noise
     inward = proj_vec(-x)                    # tangent "towards origin"
     v_rand = proj_vec(xi)                    # random tangent direction
+
     v_dir  = v_rand + kappa * inward
     drift  = -lam * inward                   # soft quadratic well
 
-    y = newton_project(x + sigma * (v_dir + drift), F, JF,
-                       iters=newton_iters, method=proj_method)
-    y = _clip_to_ball(x, y, F, JF, R)
+    y = solver(x + sigma * (v_dir + drift))
+    y = _clip_to_ball(x, y, solver, R)
+    #y = newton_project(x + sigma * (v_dir + drift), F, JF,
+    #                   iters=newton_iters, method=proj_method)
+    #y = _clip_to_ball(x, y, F, JF, R)
     return y
 
 # ---------- Convenience: draw a chain ----------
 def langevin_implicit(phi, *, n=2000, burn=200, thin=1,
-                     sigma=5e-2, lam=0.0, kappa=0.5, R=jnp.inf, newton_iters=6,key=None, x0=None):
+                     sigma=5e-2, lam=0.0, kappa=0.5, R=jnp.inf, newton_iters=6,key=None, x0=None, tol=1e-1):
 
     """Return n samples after burn-in/thinning from M ∩ B(0,R)."""
 
@@ -217,14 +258,12 @@ def langevin_implicit(phi, *, n=2000, burn=200, thin=1,
     d_tot, d_out = infer_io_shapes(phi)
     d_tot = d_tot[0]
 
+    solver, solver_class = chose_solvers(phi)
+
     if x0 is None:
         x0 = jnp.zeros((d_tot,), dtype=jnp.float32)
         x0 = x0.at[:d_tot].set(jax.random.uniform(jax.random.PRNGKey(0), (d_tot,), minval=-1.0, maxval=1.0))
-        # Project to the manifold
-        x0 = newton_project(x0, phi, J_phi, iters=newton_iters)
-
-    print(x0)
-
+        x0 = solver(x0)
     if key is None:
         key = jax.random.PRNGKey(0)
 
@@ -232,15 +271,19 @@ def langevin_implicit(phi, *, n=2000, burn=200, thin=1,
     keys  = jax.random.split(key, total)
 
     def one(x, k):
-        y = roi_langevin_step(k, x, F=phi, JF=J_phi, sigma=sigma, lam=lam, kappa=kappa, R=R, newton_iters=newton_iters)
+        y = roi_langevin_step(k, x, JF=J_phi, sigma=sigma, lam=lam, kappa=kappa, R=R, solver=solver)
         return y, y
+
     xf, path = jax.lax.scan(one, x0, keys)
     kept = path[burn::thin] # shape (n, D)
+    # # filter out if abs(f) is too large (numerical issues)
+    # # reproject  to be sure
+    solver = solver_class(phi, vmapped=True, n_iterations=3)
+    kept = solver(kept)
+    f_kept = jax.vmap(phi)(kept)
+    if len(f_kept.shape) == 1:
+        f_kept = f_kept[:, None]
+    mask = jnp.linalg.norm(f_kept, axis=1) < tol
+    kept = kept[mask]
     return kept
 
-
-from jnlr.utils.manifolds import f_ackley as phi_expl
-from jnlr.utils.function_utils import f_impl
-
-phi = f_impl(phi_expl)
-samples = langevin_implicit(phi, n=500, burn=100, thin=2, sigma=0.1, lam=0.01, kappa=0.1, R=3.0)

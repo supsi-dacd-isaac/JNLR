@@ -2,10 +2,12 @@ import jax.numpy as jnp
 import jax
 from jax import lax
 import optax
+from jnlr.utils.function_utils import infer_io_shapes
 
-def make_projector_alm_optax(
-    f, W,
-    *,
+
+def make_solver_alm_optax(
+    f,
+    w:jnp.ndarray = None,
     # --- ALM (outer) ---
     n_iterations: int = 30,
     tol_feas: float = 1e-8,
@@ -24,6 +26,7 @@ def make_projector_alm_optax(
     # numerics
     eps_chol: float = 1e-12,
     return_history: bool = False,
+    vmapped: bool = True,
 ):
     """
     Returns: proj(zhat_batch) -> z_proj_batch
@@ -31,7 +34,14 @@ def make_projector_alm_optax(
     """
 
     # --- Whitening W = L^T L ---
-    W = jnp.asarray(W); W = 0.5 * (W + W.T)
+    if w is None:
+        input_d, output_d = infer_io_shapes(f)
+        W = jnp.eye(input_d[0])
+    else:
+        W = jnp.asarray(w)
+
+    W = jnp.asarray(W)
+    W = 0.5 * (W + W.T)
     n = W.shape[0]
     L = jnp.linalg.cholesky(W + eps_chol * jnp.eye(n))
     Linv = jnp.linalg.solve(L, jnp.eye(n))
@@ -156,16 +166,15 @@ def make_projector_alm_optax(
 
 
 
-
-
-
-
-    return jax.jit(jax.vmap(solve_single))
+    if vmapped:
+        return jax.jit(jax.vmap(solve_single))
+    else:
+        return jax.jit(solve_single)
 
 
 def make_solver_proj_nt_curv(
-    f, W,
-    *,
+    f,
+    w:jnp.ndarray = None,
     n_iterations: int = 30,        # outer iters
     n_tangent_micro: int = 3,      # relinearized tangent micro-steps / iter
     alpha_n: float = 1.0,          # normal step fraction
@@ -174,6 +183,7 @@ def make_solver_proj_nt_curv(
     max_bt: int = 6,               # max shrink attempts per micro-step
     damping: float = 1e-6,         # tiny Tikhonov on JJ^T
     return_history: bool = False,
+    vmapped: bool = True,
 ):
     """
     Constrained projection: min 0.5||z-zhat||^2 s.t. f(z)=0
@@ -187,7 +197,7 @@ def make_solver_proj_nt_curv(
              accept z + a s_t only if ||f|| decreases; else a <- beta*a
     This keeps moves small, exploits curvature, and has very few knobs.
     """
-    _ = jnp.asarray(W)  # API compat
+
     jac_f = jax.jacfwd(f)
 
     def f_norm(z):       # scalar feasibility
@@ -247,12 +257,15 @@ def make_solver_proj_nt_curv(
         (zT, _), hist = lax.scan(scan_step, (z0, zhat), xs=None, length=n_iterations)
         return hist if return_history else zT
 
-    return jax.jit(jax.vmap(solve_single))
+    if vmapped:
+        return jax.jit(jax.vmap(solve_single))
+    else:
+        return jax.jit(solve_single)
 
 
 def make_solver_vanilla(
     f,
-    W: jnp.ndarray,                      # kept for API compatibility
+    w: jnp.ndarray,                      # kept for API compatibility
     n_iterations: int = 50,
     damping: float = 1e-4,               # a bit larger for stability
     alpha: float = 0.5,                  # relaxation (0<alpha<=1)
@@ -261,9 +274,9 @@ def make_solver_vanilla(
     c_armijo: float = 1e-4,              # sufficient decrease
     max_bt: int = 10,
     return_history: bool = False,
+    vmapped: bool = True,
 ):
     jac_f = jax.jacfwd(f)
-    _ = jnp.asarray(W)  # unused, but keeps signature stable
 
     def merit(z, zhat):
         r = jnp.atleast_1d(f(z)) + jnp.sum((zhat - z)**2)
@@ -322,18 +335,23 @@ def make_solver_vanilla(
             z_final = lax.fori_loop(0, n_iterations, body, z0)
             return z_final  # (n,)
 
-    return jax.jit(jax.vmap(solve_single))
+    if vmapped:
+        return jax.jit(jax.vmap(solve_single))
+    else:
+        return jax.jit(solve_single)
 
 
 
 
-def make_solver(f, W: jnp.ndarray,
+def make_solver(f,
+                w:jnp.ndarray = None,
                 n_iterations: int = 50,
                 damping: float = 1e-5,          # a bit larger for f32; reduce if using x64
                 beta: float = 0.5,              # backtracking factor
                 c_armijo: float = 1e-4,         # sufficient decrease on ||f||
                 max_bt: int = 12,
-                return_history: bool = False):
+                return_history: bool = False,
+                vmapped: bool = True):
     r"""
     Create a v-mapped and JIT-compiled solver function for the constrained optimization problem.
     Here f is the implicit function representing the manifold constraints: $M = \{ z : f(z) = 0 \}$.
@@ -354,10 +372,13 @@ def make_solver(f, W: jnp.ndarray,
         A JIT-compiled function that takes z_hat as input and returns the projected z.
     """
 
-    W = jnp.asarray(W)
-    jac_f = jax.jacfwd(f)
-    from jnlr.utils.function_utils import infer_io_shapes
     n_input, n_constraints = infer_io_shapes(f)
+
+    if w is None:
+        W = jnp.eye(n_input[0])
+    else:
+        W = jnp.asarray(w)
+    jac_f = jax.jacfwd(f)
 
     #n_constraints = jnp.atleast_1d(f(jnp.zeros(W.shape[0]))).shape[0]
 
@@ -424,6 +445,8 @@ def make_solver(f, W: jnp.ndarray,
             z_final, _ = lax.fori_loop(0, n_iterations, body_fn, (z, lam))
             return z_final
 
-    return jax.jit(jax.vmap(solve_single))
-
+    if vmapped:
+        return jax.jit(jax.vmap(solve_single))
+    else:
+        return jax.jit(solve_single)
 
