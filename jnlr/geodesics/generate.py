@@ -9,6 +9,25 @@ from jnlr.utils.manifolds import f_paraboloid
 
 logger = configure_logging(__name__)
 
+def trapezoid_integral(y, x):
+    dx = x[1:] - x[:-1]
+    return jnp.sum(0.5 * (y[1:] + y[:-1]) * dx)
+
+def trapezoid_cumulative(y, x):
+    dx = x[1:] - x[:-1]
+    inc = 0.5 * (y[1:] + y[:-1]) * dx
+    return jnp.concatenate([jnp.array([0.0]), jnp.cumsum(inc)])
+
+def project_velocity_to_tangent(J, x, v, eps=1e-10):
+    """
+    Tangent projection for codimension c:
+    v_tan = v - J^T (JJ^T)^{-1} (J v).
+    """
+    J_x   = J(x)                   # (c, D)
+    rhs = J_x @ v                              # (c,)
+    JJt = J_x @ J_x.T + eps * jnp.eye(J_x.shape[0])
+    y   = jnp.linalg.solve(JJt, rhs)         # (c,)
+    return v - J_x.T @ y                       # (D,)
 
 def vHv_all(f_vec, x, v):
     def single_fi(fi):
@@ -43,7 +62,7 @@ def make_geodesic_rhs_soa(f_vec):
 
 
 def integrate_geodesic_implicit_generic(
-    F, rhs, x0, v0, t1=1.0, n_steps=400, project_init=True, project_after=True):
+    F, x0, v0, t1=1.0, n_steps=400, project_init=True, project_after=True):
     """
     SECOND ORDER APPROXIMATION
     Integrate a geodesic on {x : F(x)=0}, F: R^D -> R^c (vector-valued).
@@ -57,14 +76,15 @@ def integrate_geodesic_implicit_generic(
       L_total : scalar geodesic length
       L_cum   : (n_steps,) cumulative length
     """
+    J = jax.jacfwd(F)                 # (c, D)
     if project_init:
-        x0 = project_point_to_surface(F, x0)
-        v0 = project_velocity_to_tangent(F, x0, v0)
+        x0 = project(x0)
+        v0 = project_velocity_to_tangent(J, x0, v0)
 
     y0 = jnp.concatenate([x0, v0])
     ts = jnp.linspace(0.0, t1, n_steps)
 
-    #rhs = make_geodesic_rhs_multi(F)
+    rhs = make_geodesic_rhs_soa(F)
     term   = dfx.ODETerm(rhs)
     solver = dfx.Tsit5()
     sol = dfx.diffeqsolve(
@@ -79,11 +99,11 @@ def integrate_geodesic_implicit_generic(
 
     if project_after:
         # project points back to F=0
-        X = jax.vmap(lambda x: project_point_to_surface(F, x))(X)
+        X = project(X)
         # reproject velocities to tangent at the corrected points
         D = X.shape[-1]
         packed = jnp.concatenate([X, V], axis=-1)     # (n_steps, 2D)
-        V = jax.vmap(lambda xv: project_velocity_to_tangent(F, xv[:D], xv[D:]))(packed)
+        V = jax.vmap(lambda xv: project_velocity_to_tangent(J, xv[:D], xv[D:]))(packed)
 
     speeds  = jnp.linalg.norm(V, axis=-1)    # ||x'(t)|| in ambient → geodesic speed
     L_total = trapezoid_integral(speeds, ts)

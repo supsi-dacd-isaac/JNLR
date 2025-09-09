@@ -18,7 +18,7 @@ class LevelColorFilter(logging.Filter):
 
         return True
 
-def configure_logging(name, level: int = logging.INFO) -> None:
+def configure_logging(name, level: int = logging.INFO) -> logging.Logger:
     handler = logging.StreamHandler(stream=sys.stderr)
     fmt = "%(color_start_time)s%(asctime)s%(color_start_level)s %(levelname)s %(name)s%(color_start_message)s: %(message)s"
     handler.setFormatter(logging.Formatter(fmt))

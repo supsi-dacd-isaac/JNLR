@@ -1,9 +1,113 @@
 import numpy as np
 import plotly.graph_objects as go
-from jnlr.reconcile import make_solver
+from jnlr.reconcile import make_solver_alm_optax
 import jax.numpy as jnp
 from jax import vmap
 from jnlr.utils.function_utils import f_impl
+
+
+def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
+                     color: str = "lightgray",
+                     show_edges: bool = True,
+                     edge_color: str = "black",
+                     edge_width: float = 1.0,
+                     opacity: float = .8, title="Mesh",
+                     lines=None, points=None):
+    """
+    Plot a triangular mesh with Plotly.
+
+    Parameters
+    ----------
+    vertices : (n, 3) array
+        vertex positions.
+    triangles : (m, 3) array
+        Triangle indices.
+    color : str or array
+        Surface color (name or per-vertex scalar array for colormap).
+    show_edges : bool
+        If True, also show mesh edges.
+    edge_color : str
+        Color of mesh edges.
+    edge_width : float
+        Width of mesh edges.
+    opacity : float
+        Surface opacity.
+
+    Returns
+    -------
+    fig : plotly.graph_objects.Figure
+    """
+    vertices = np.asarray(vertices)
+    triangles = np.asarray(triangles)
+
+    # Main surface
+    mesh = go.Mesh3d(
+        x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
+        i=triangles[:, 0], j=triangles[:, 1], k=triangles[:, 2],
+        color=color if isinstance(color, str) else None,
+        intensity=color if not isinstance(color, str) else None,
+        colorscale="Viridis" if not isinstance(color, str) else None,
+        showscale=not isinstance(color, str),
+        opacity=opacity,
+        flatshading=True,
+    )
+
+    data = [mesh]
+
+    # Optional edges
+    if show_edges:
+        Xe, Ye, Ze = [], [], []
+        for f in triangles:
+            for e in [(0, 1), (1, 2), (2, 0)]:
+                Xe += [vertices[f[e[0]], 0], vertices[f[e[1]], 0], None]
+                Ye += [vertices[f[e[0]], 1], vertices[f[e[1]], 1], None]
+                Ze += [vertices[f[e[0]], 2], vertices[f[e[1]], 2], None]
+        edges = go.Scatter3d(
+            x=Xe, y=Ye, z=Ze,
+            mode="lines",
+            line=dict(color=edge_color, width=edge_width),
+            hoverinfo="none",
+            opacity=0.1,
+        )
+        data.append(edges)
+
+    fig = go.Figure(data=data)
+    # add all the pahts in lines if lines is not None
+    if lines is not None:
+        if not isinstance(lines, list) and lines.ndim == 2:
+            lines = [lines]
+        for line in lines:
+            line = np.asarray(line)
+            fig.add_trace(go.Scatter3d(
+                x=line[:, 0], y=line[:, 1], z=line[:, 2],
+                mode="lines",
+                line=dict(color="red", width=2),
+                hoverinfo="none",
+            ))
+
+    if points is not None:
+        points = np.asarray(points)
+        fig.add_trace(go.Scatter3d(
+            x=points[:, 0], y=points[:, 1], z=points[:, 2],
+            mode="markers",
+            marker=dict(size=4, color="blue"),
+            hoverinfo="none",
+        ))
+
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            zaxis=dict(visible=False),
+            aspectmode="data"
+        ),
+        height=800,
+        margin=dict(l=0, r=0, b=0, t=0),
+        title=title
+    )
+
+
+    return fig
 
 
 def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False):
@@ -14,7 +118,7 @@ def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, 
     X_np = np.asarray(X)
 
     if f_explicit is not None:
-        solver_builder = make_solver if solver_builder is None else solver_builder
+        solver_builder = make_solver_alm_optax if solver_builder is None else solver_builder
         f_implicit = f_impl(f_explicit)
         W = jnp.eye(X.shape[1]) if W is None else W
         solver = solver_builder(f_implicit, W, n_iterations=n_iterations, return_history=plot_history)

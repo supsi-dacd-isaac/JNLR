@@ -141,5 +141,4 @@ def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=21):
 def infer_io_shapes(f, *, dtype=jnp.float32, d_input=None):
     if d_input is None:
         d_input = infer_min_input_size(f, dtype=dtype)
-    out_aval = jax.eval_shape(f, jax.ShapeDtypeStruct((d_input,), dtype))
     return (d_input,), jnp.atleast_1d(f(jnp.arange(d_input, dtype=dtype))).shape

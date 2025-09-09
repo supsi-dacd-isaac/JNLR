@@ -13,4 +13,6 @@ dependencies = [
     "numpy>=2.3.2",
     "optax>=0.2.5",
     "plotly>=6.3.0",
+    "pygeodesic>=0.1.11",
+    "scikit-learn>=1.7.1",
 ]
