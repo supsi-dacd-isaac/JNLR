@@ -4,15 +4,15 @@ from jnlr.reconcile import make_solver_alm_optax
 import jax.numpy as jnp
 from jax import vmap
 from jnlr.utils.function_utils import f_impl
-
+import plotly.express as px
 
 def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
-                     color: str = "lightgray",
+                     color: str = None,
                      show_edges: bool = True,
                      edge_color: str = "black",
                      edge_width: float = 1.0,
                      opacity: float = .8, title="Mesh",
-                     lines=None, points=None):
+                     lines=None, points=None, colorscale="Purples", line_color=None):
     """
     Plot a triangular mesh with Plotly.
 
@@ -39,15 +39,22 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
     """
     vertices = np.asarray(vertices)
     triangles = np.asarray(triangles)
-
+    intensity = vertices[:, -1]
+    vmin, vmax = np.nanmin(intensity), np.nanmax(intensity)
+    rng = vmax - vmin
+    if rng == 0 or not np.isfinite(rng):
+        # force a small spread so the colorscale has something to map
+        intensity_norm = np.zeros_like(intensity)
+    else:
+        intensity_norm = (intensity - vmin) / (rng + 1e-12)
     # Main surface
     mesh = go.Mesh3d(
         x=vertices[:, 0], y=vertices[:, 1], z=vertices[:, 2],
         i=triangles[:, 0], j=triangles[:, 1], k=triangles[:, 2],
         color=color if isinstance(color, str) else None,
-        intensity=color if not isinstance(color, str) else None,
-        colorscale="Viridis" if not isinstance(color, str) else None,
-        showscale=not isinstance(color, str),
+        intensity=intensity_norm,
+        colorscale=colorscale if not isinstance(color, str) else None,
+        showscale=False,
         opacity=opacity,
         flatshading=True,
     )
@@ -72,17 +79,25 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
         data.append(edges)
 
     fig = go.Figure(data=data)
+
     # add all the pahts in lines if lines is not None
     if lines is not None:
+        N = len(lines)
+        colors = px.colors.sample_colorscale("Viridis", [i / N for i in range(N)])
+
         if not isinstance(lines, list) and lines.ndim == 2:
             lines = [lines]
-        for line in lines:
+        for i, line in enumerate(lines):
+            showlegend = (i == 0)  or line_color is None  # only show legend once if line_color is None
+            color_i = colors[i % len(colors)] if line_color is None else line_color
             line = np.asarray(line)
             fig.add_trace(go.Scatter3d(
                 x=line[:, 0], y=line[:, 1], z=line[:, 2],
                 mode="lines",
-                line=dict(color="red", width=2),
+                line=dict(color=color_i, width=2),
                 hoverinfo="none",
+                showlegend=showlegend,
+                name="Path" if showlegend else None
             ))
 
     if points is not None:
@@ -99,7 +114,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
             xaxis=dict(visible=False),
             yaxis=dict(visible=False),
             zaxis=dict(visible=False),
-            aspectmode="data"
+            aspectmode="cube"
         ),
         height=800,
         margin=dict(l=0, r=0, b=0, t=0),
@@ -110,7 +125,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
     return fig
 
 
-def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False):
+def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False, colorscale="Purples"):
     """
     Plots original points X and their projections X_proj onto a surface defined by f_paraboloid.
     """
@@ -130,8 +145,8 @@ def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, 
 
         # Determine surface domain from data (pad a bit)
         all_xy = np.vstack([X_np[:, :2], Xp_np[:, :2]])
-        mins = all_xy.min(axis=0)
-        maxs = all_xy.max(axis=0)
+        mins = np.nanmin(all_xy, axis=0)
+        maxs = np.nanmax(all_xy, axis=0)
         lo = mins
         hi = maxs
 
@@ -168,7 +183,7 @@ def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, 
         # Paraboloid surface
         fig.add_trace(go.Surface(
             x=np.asarray(X0), y=np.asarray(X1), z=np.asarray(Z),
-            colorscale="Viridis", showscale=False, opacity=0.55, name="paraboloid"
+            colorscale=colorscale, showscale=False, opacity=0.55, name="paraboloid"
         ))
 
         # Projected points
