@@ -125,16 +125,17 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
     return fig
 
 
-def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False, colorscale="Purples"):
+def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False, colorscale="Purples"):
     """
     Plots original points X and their projections X_proj onto a surface defined by f_paraboloid.
     """
     fig = go.Figure()
     X_np = np.asarray(X)
 
-    if f_explicit is not None:
+    if f_explicit is not None or f_impl is not None:
         solver_builder = make_solver_alm_optax if solver_builder is None else solver_builder
-        f_implicit = f_impl(f_explicit)
+        f_implicit = f_implicit if f_implicit is not None else f_impl(f_explicit)
+
         W = jnp.eye(X.shape[1]) if W is None else W
         solver = solver_builder(f_implicit, W, n_iterations=n_iterations, return_history=plot_history)
         X_proj = solver(X)
@@ -151,23 +152,39 @@ def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, 
         hi = maxs
 
         # Build grid over x0,x1 and evaluate y = f_paraboloid([x0,x1])
-        gx = jnp.linspace(lo[0], hi[0], 80)
-        gy = jnp.linspace(lo[1], hi[1], 80)
-        X0, X1 = jnp.meshgrid(gx, gy, indexing="xy")
+        if f_explicit is not None:
+            gx = jnp.linspace(lo[0], hi[0], 80)
+            gy = jnp.linspace(lo[1], hi[1], 80)
+            X0, X1 = jnp.meshgrid(gx, gy, indexing="xy")
 
-        # cut it within the circle with radius 1.5
-        if round_cutoff is not None:
-            mask = X0 ** 2 + X1 ** 2 <= square_cutoff ** 2
-            X0 = jnp.where(mask, X0, jnp.nan)
-            X1 = jnp.where(mask, X1, jnp.nan)
+            # cut it within the circle with radius 1.5
+            if round_cutoff is not None:
+                mask = X0 ** 2 + X1 ** 2 <= square_cutoff ** 2
+                X0 = jnp.where(mask, X0, jnp.nan)
+                X1 = jnp.where(mask, X1, jnp.nan)
 
-        if square_cutoff is not None:
-            X0 = jnp.clip(X0, -square_cutoff, square_cutoff)
-            X1 = jnp.clip(X1, -square_cutoff, square_cutoff)
+            if square_cutoff is not None:
+                X0 = jnp.clip(X0, -square_cutoff, square_cutoff)
+                X1 = jnp.clip(X1, -square_cutoff, square_cutoff)
 
-        grid_pairs = jnp.stack([X0.ravel(), X1.ravel()], axis=1)  # (G, 2)
-        Z = vmap(f_explicit)(grid_pairs)
-        Z = jnp.reshape(Z, X0.shape)
+            grid_pairs = jnp.stack([X0.ravel(), X1.ravel()], axis=1)  # (G, 2)
+            Z = vmap(f_explicit)(grid_pairs)
+            X0 = np.asarray(X0)
+            X1 = np.asarray(X1)
+            Z = jnp.reshape(Z, X0.shape)
+        else:
+            x = jnp.linspace(lo[0], hi[0], 80)
+            y = jnp.linspace(lo[0], hi[0], 80)
+            z = jnp.linspace(lo[0], hi[0], 80)
+            X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
+
+            points = jnp.stack([X.flatten(), Y.flatten(), Z.flatten()], axis=1)
+            f_vals = vmap(f_implicit)(points)
+            mask = jnp.abs(f_vals) < 0.05
+            surface_points = points[mask]
+            X0 = np.asarray(surface_points[:, 0]).ravel()
+            X1 = np.asarray(surface_points[:, 1]).ravel()
+            Z = np.asarray(surface_points[:, 2]).ravel()
 
         # Prepare dashed line segments from X to X_proj using NaNs to break segments
         n = X_np.shape[0]
@@ -181,11 +198,24 @@ def plot_3d_projection(X, f_explicit=None, square_cutoff=1.5, round_cutoff=1.5, 
 
 
         # Paraboloid surface
-        fig.add_trace(go.Surface(
-            x=np.asarray(X0), y=np.asarray(X1), z=np.asarray(Z),
-            colorscale=colorscale, showscale=False, opacity=0.55, name="paraboloid"
-        ))
-
+        if f_explicit is not None:
+            fig.add_trace(go.Surface(
+                x=X0, y=X1, z=Z,
+                colorscale=colorscale, showscale=False, opacity=0.55, name="surface"
+            ))
+        else:
+            # add Mesh3d
+            fig.add_trace(go.Mesh3d(
+                x=X0,
+                y=X1,
+                z=Z,
+                alphahull=0,
+                opacity=0.55,
+                intensity=Z,
+                colorscale=colorscale,
+                showscale=False,
+                name="surface"
+            ))
         # Projected points
         fig.add_trace(go.Scatter3d(
             x=Xp_np[:, 0], y=Xp_np[:, 1], z=Xp_np[:, 2],
