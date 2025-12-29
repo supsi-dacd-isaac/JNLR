@@ -1,0 +1,20 @@
+Metadata-Version: 2.4
+Name: jnlr
+Version: 0.1.0
+Summary: Jax-based library for nonlinear reconciliation and learning
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: diffrax>=0.7.0
+Requires-Dist: jax>=0.7.1
+Requires-Dist: mkdocs>=1.6.1
+Requires-Dist: mkdocs-material>=9.6.18
+Requires-Dist: mkdocstrings[python]>=0.30.0
+Requires-Dist: numpy>=2.3.2
+Requires-Dist: optax>=0.2.5
+Requires-Dist: plotly>=6.3.0
+Requires-Dist: pygeodesic>=0.1.11
+Requires-Dist: scikit-learn>=1.7.1
+Dynamic: license-file
+
+# JNLR Jax-based non-linear reconciliation and learning 

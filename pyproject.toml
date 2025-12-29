@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "jnlr"
 version = "0.1.0"
@@ -16,3 +20,12 @@ dependencies = [
     "pygeodesic>=0.1.11",
     "scikit-learn>=1.7.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+    "nbformat>=4.2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
