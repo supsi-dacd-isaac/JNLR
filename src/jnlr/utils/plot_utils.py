@@ -105,7 +105,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
         fig.add_trace(go.Scatter3d(
             x=points[:, 0], y=points[:, 1], z=points[:, 2],
             mode="markers",
-            marker=dict(size=4, color="blue"),
+            marker=dict(size=4, color="rgba(120,120,120,0.9)"),
             hoverinfo="none",
         ))
 
@@ -125,11 +125,15 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
     return fig
 
 
-def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10, solver_builder=None, plot_history=False, colorscale="Purples"):
+def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10,
+                       solver_builder=None, plot_history=False, colorscale="Purples", lo=None, hi=None,
+                       remove_axes=False, proj_alpha=1.0,
+                       orig_color="rgba(120,120,120,0.9)", orig_size=2,
+                       proj_color="crimson", proj_size=2, n_grid=80, shrink_projection=False, **kwargs_fig):
     """
     Plots original points X and their projections X_proj onto a surface defined by f_paraboloid.
     """
-    fig = go.Figure()
+    fig = go.Figure(**kwargs_fig)
     X_np = np.asarray(X)
 
     if f_explicit is not None or f_impl is not None:
@@ -144,17 +148,21 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
         # Convert to NumPy for plotting
         Xp_np =np.asarray(X_proj[:, -1, :]) if plot_history else  np.asarray(X_proj)
 
+        if shrink_projection:
+            # Blend projected points: 95% projected + 5% original
+            Xp_np = 0.95 * Xp_np + 0.05 * X_np
+
         # Determine surface domain from data (pad a bit)
         all_xy = np.vstack([X_np[:, :2], Xp_np[:, :2]])
         mins = np.nanmin(all_xy, axis=0)
         maxs = np.nanmax(all_xy, axis=0)
-        lo = mins
-        hi = maxs
+        lo = lo if lo is not None else mins
+        hi = hi if hi is not None else maxs
 
         # Build grid over x0,x1 and evaluate y = f_paraboloid([x0,x1])
         if f_explicit is not None:
-            gx = jnp.linspace(lo[0], hi[0], 80)
-            gy = jnp.linspace(lo[1], hi[1], 80)
+            gx = jnp.linspace(lo[0], hi[0], n_grid)
+            gy = jnp.linspace(lo[1], hi[1], n_grid)
             X0, X1 = jnp.meshgrid(gx, gy, indexing="xy")
 
             # cut it within the circle with radius 1.5
@@ -173,9 +181,9 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
             X1 = np.asarray(X1)
             Z = jnp.reshape(Z, X0.shape)
         else:
-            x = jnp.linspace(lo[0], hi[0], 80)
-            y = jnp.linspace(lo[0], hi[0], 80)
-            z = jnp.linspace(lo[0], hi[0], 80)
+            x = jnp.linspace(lo[0], hi[0], n_grid)
+            y = jnp.linspace(lo[0], hi[0], n_grid)
+            z = jnp.linspace(lo[0], hi[0], n_grid)
             X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
 
             points = jnp.stack([X.flatten(), Y.flatten(), Z.flatten()], axis=1)
@@ -201,26 +209,29 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
         if f_explicit is not None:
             fig.add_trace(go.Surface(
                 x=X0, y=X1, z=Z,
-                colorscale=colorscale, showscale=False, opacity=0.55, name="surface"
+                colorscale=colorscale, showscale=False, opacity=0.55, name="surface",
+                lighting=dict(ambient=1, diffuse=0, specular=0, roughness=1, fresnel=0),
             ))
         else:
             # add Mesh3d
             fig.add_trace(go.Mesh3d(
-                x=X0,
-                y=X1,
-                z=Z,
-                alphahull=0,
-                opacity=0.55,
-                intensity=Z,
-                colorscale=colorscale,
-                showscale=False,
-                name="surface"
+               x=X0,
+               y=X1,
+               z=Z,
+               alphahull=0,
+               opacity=0.55,
+               intensity=Z,
+               colorscale=colorscale,
+               showscale=False,
+               name="surface",
+               lighting=dict(ambient=1, diffuse=0, specular=0, roughness=1, fresnel=0)
             ))
+
         # Projected points
         fig.add_trace(go.Scatter3d(
             x=Xp_np[:, 0], y=Xp_np[:, 1], z=Xp_np[:, 2],
             mode="markers",
-            marker=dict(size=2, color="crimson"),
+            marker=dict(size=proj_size, color=proj_color),
             name="projected"
         ))
 
@@ -244,15 +255,33 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
             fig.add_trace(go.Scatter3d(
                 x=x_lines.ravel(), y=y_lines.ravel(), z=z_lines.ravel(),
                 mode="lines",
-                line=dict(color="black", width=1),
+                line=dict(color=f"rgba(0,0,0,{proj_alpha})", width=1),
                 name="links"
             ))
+
+        if remove_axes:
+            axis_config = dict(
+                showgrid=False,
+                showline=False,
+                showticklabels=False,
+                title='',
+                showbackground=False,  # This removes the colored 'walls' of the cube
+                visible=False
+            )
+
+            fig.update_layout(
+                scene=dict(
+                    xaxis=axis_config,
+                    yaxis=axis_config,
+                    zaxis=axis_config
+                )
+            )
 
     # Original points
     fig.add_trace(go.Scatter3d(
         x=X_np[:, 0], y=X_np[:, 1], z=X_np[:, 2],
         mode="markers",
-        marker=dict(size=2, color="rgba(120,120,120,0.9)"),
+        marker=dict(size=orig_size, color=orig_color),
         name="original"
     ))
 
@@ -261,6 +290,5 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
                       scene=dict(xaxis_title='X Axis', yaxis_title='Y Axis', zaxis_title='Z Axis', aspectmode='cube'),
                       legend=dict(itemsizing="constant"),
                       height=800)
-
 
     return fig
