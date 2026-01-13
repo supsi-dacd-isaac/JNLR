@@ -15,8 +15,33 @@
 - **JAX-native**: Fully JIT-compiled and vectorized (`vmap`) for high-performance batch processing
 
 
-
-
 ## Running the notebooks
 If you want to run the notebooks, the suggested way is to install `uv` packet manager, cloning the repo and, from a terminal:
 `uv pip install -e .`
+
+
+## Citation
+
+If you use **JNLR** in academic work, please cite the associated paper:
+
+Lorenzo Nespoli, Anubhab Biswas, Roberto Rocchetta, and Vasco Medici.  
+"Nonlinear reconciliation: Error reduction theorems."  
+Transactions on Machine Learning Research (TMLR), 2026.  
+OpenReview: https://openreview.net/forum?id=dXRWuogm3J
+
+### BibTeX
+
+```bibtex
+@article{nespoli2026nonlinear_reconciliation,
+  title   = {Nonlinear reconciliation: Error reduction theorems},
+  author  = {Nespoli, Lorenzo and Biswas, Anubhab and Rocchetta, Roberto and Medici, Vasco},
+  journal = {Transactions on Machine Learning Research},
+  year    = {2026},
+  url     = {https://openreview.net/forum?id=dXRWuogm3J},
+  note    = {Accepted by TMLR}
+}
+```
+
+## Acknowledgements
+
+This work has been funded by the Swiss State Secretariat for Education, Research and Innovation (SERI) under the Swiss contribution to the Horizon Europe projects DR-RISE (Horizon Europe, Grant Agreement No. 101104154) and REEFLEX (Horizon Europe, Grant Agreement No. 101096192).
