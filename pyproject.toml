@@ -13,6 +13,7 @@ dependencies = [
     "jax>=0.7.1",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.18",
+    "mknotebooks>=0.7.0",
     "mkdocstrings[python]>=0.30.0",
     "numpy>=2.3.2",
     "optax>=0.2.5",
@@ -25,6 +26,7 @@ dependencies = [
 dev = [
     "ipykernel>=7.1.0",
     "nbformat>=4.2.0",
+    "nbconvert>=7.0.0",
 ]
 
 [tool.setuptools.packages.find]
