@@ -136,7 +136,7 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
     fig = go.Figure(**kwargs_fig)
     X_np = np.asarray(X)
 
-    if f_explicit is not None or f_impl is not None:
+    if f_explicit is not None or f_implicit is not None:
         solver_builder = make_solver_alm_optax if solver_builder is None else solver_builder
         f_implicit = f_implicit if f_implicit is not None else f_impl(f_explicit)
 
