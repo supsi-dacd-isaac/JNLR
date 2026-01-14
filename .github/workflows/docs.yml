@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install mkdocs mkdocs-material "mkdocstrings[python]"
+          pip install -e .
 
       - name: Deploy documentation
         run: mkdocs gh-deploy --force
