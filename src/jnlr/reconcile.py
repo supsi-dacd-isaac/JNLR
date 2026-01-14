@@ -28,9 +28,9 @@ def make_solver_alm_optax(
     return_history: bool = False,
     vmapped: bool = True,
 ):
-    """
+    r"""
     Returns: proj(zhat_batch) -> z_proj_batch
-    Projects onto {z : f(z)=0} in metric W using ALM + Optax L-BFGS (zoom line search).
+    Projects onto ${z : f(z)=0}$ in metric W using ALM + Optax L-BFGS (zoom line search).
     """
 
     # --- Whitening W = L^T L ---
@@ -69,8 +69,8 @@ def make_solver_alm_optax(
         return jnp.linalg.norm(jnp.atleast_1d(f(z)))
 
     def inner_minimize(y_init, yhat, lam, rho):
-        """
-        Minimize L(y; lam, rho) = 0.5||y - yhat||^2 + lam^T c + 0.5*rho*||c||^2
+        r"""
+        Minimize $$L(y; lam, rho) = 0.5||y - yhat||^2 + lam^T c + 0.5*rho*||c||^2$$
         with Optax L-BFGS + zoom LS.
         """
         # Objective (captures yhat, lam, rho)
@@ -185,16 +185,26 @@ def make_solver_proj_nt_curv(
     return_history: bool = False,
     vmapped: bool = True,
 ):
-    """
-    Constrained projection: min 0.5||z-zhat||^2 s.t. f(z)=0
+    r"""
+    Constrained projection:
+
+    $$\text{arg}\min_{z} \tfrac{1}{2} (z - \hat{z})^T W (z - \hat{z})$$
+
+    $$\text{s.t. } f(z) = 0$$
+
     Iteration:
       1) Normal correction at current z:
-           s_n = -J^T (JJ^T + eps I)^(-1) f(z);  z <- z + alpha_n s_n
+
+      $$s_n = -J^T (JJ^T + \varepsilon I)^{-1} f(z);  z <- z + \alpha _n s_n$$
+
       2) Curvature-aware tangent slide (n_tangent_micro times):
            relinearize at each sub-step:
-             Pt = I - J^T (JJ^T + eps I)^(-1) J
-             s_t = - Pt (z - zhat)
-             accept z + a s_t only if ||f|| decreases; else a <- beta*a
+
+      $$ Pt = I - J^T (JJ^T + \varepsilon I)^{-1} J$$
+
+      $$s_t = - Pt (z - \hat z)$$
+
+      accept $z + \alpha s_t$ only if $||f||$ decreases; else \alpha <- \beta\alpha
     This keeps moves small, exploits curvature, and has very few knobs.
     """
 
@@ -355,13 +365,11 @@ def make_solver(f,
     r"""
     Create a v-mapped and JIT-compiled solver function for the constrained optimization problem.
     Here f is the implicit function representing the manifold constraints: $M = \{ z : f(z) = 0 \}$.
-    The returned function takes z_hat as input and returns the projected z.
-    $$
-    \text{arg}\min_{z} \tfrac{1}{2} (z - \hat{z})^T W (z - \hat{z}) \\
-    $$
-    $$
-    \text{s.t. } f(z) = 0
-    $$
+    The returned function takes $\hat z$ as input and returns the projected z.
+
+    $$\text{arg}\min_{z} \tfrac{1}{2} (z - \hat{z})^T W (z - \hat{z})$$
+
+    $$\text{s.t. } f(z) = 0$$
 
     Args:
         f: Function representing the constraints, in implicit form. The signature of f should be $f(z): \mathbb{R}^n \rightarrow \mathbb{R}^m$ where $n$ is the dimension of the input and m the output.
