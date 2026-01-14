@@ -29,13 +29,9 @@ jobs:
         run: |
           uv pip install --system -e ".[dev]"
 
-      - name: Copy notebooks and convert Plotly outputs
+      - name: Convert notebooks to Markdown with Plotly
         run: |
-          # Copy fresh notebooks from notebooks/ to docs/examples/
-          mkdir -p docs/examples
-          cp notebooks/compute_geodesics.ipynb notebooks/meshes.ipynb notebooks/projection_hypersurfaces.ipynb notebooks/samplers.ipynb docs/examples/
-          # Convert Plotly JSON to HTML
-          python scripts/convert_plotly_outputs.py
+          python scripts/convert_notebooks_to_md.py
 
       - name: Deploy documentation
         run: mkdocs gh-deploy --force

@@ -9,10 +9,6 @@ theme:
     - navigation.instant       # “instant” page transitions
 plugins:
   - search
-  - mknotebooks:
-      execute: false  # Use pre-executed notebook outputs
-      include_source: true
-      ignore_h1_titles: true
   - mkdocstrings:
       handlers:
         python:
@@ -38,15 +34,13 @@ markdown_extensions:
 extra_javascript:
   - javascripts/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
-  - https://cdn.plot.ly/plotly-latest.min.js
-  - javascripts/plotly-loader.js
 nav:
   - Home: index.md
   - Examples:
-      - Geodesics: examples/compute_geodesics.ipynb
-      - Meshes: examples/meshes.ipynb
-      - Projection Hypersurfaces: examples/projection_hypersurfaces.ipynb
-      - Samplers: examples/samplers.ipynb
+      - Geodesics: examples/compute_geodesics.md
+      - Meshes: examples/meshes.md
+      - Projection Hypersurfaces: examples/projection_hypersurfaces.md
+      - Samplers: examples/samplers.md
   - API:
       - Overview: api/index.md
       - Reconcile: api/reconcile.md
