@@ -5,6 +5,8 @@ import jax.numpy as jnp
 from jax import vmap
 from jnlr.utils.function_utils import f_impl
 import plotly.express as px
+from sklearn.neighbors import KernelDensity
+from skimage import measure
 
 def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
                      color: str = None,
@@ -129,7 +131,9 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
                        solver_builder=None, plot_history=False, colorscale="Purples", lo=None, hi=None,
                        remove_axes=False, proj_alpha=1.0,
                        orig_color="rgba(120,120,120,0.9)", orig_size=2,
-                       proj_color="crimson", proj_size=2, n_grid=80, shrink_projection=False, **kwargs_fig):
+                       proj_color="crimson", proj_size=2, n_grid=80, shrink_projection=False, show_kde=False, n_isolines=7,
+                       width=800, height=800,
+                       **kwargs_fig):
     """
     Plots original points X and their projections X_proj onto a surface defined by f_paraboloid.
     """
@@ -147,7 +151,6 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
 
         # Convert to NumPy for plotting
         Xp_np =np.asarray(X_proj[:, -1, :]) if plot_history else  np.asarray(X_proj)
-
         if shrink_projection:
             # Blend projected points: 95% projected + 5% original
             Xp_np = 0.95 * Xp_np + 0.05 * X_np
@@ -204,7 +207,28 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
         x_lines[:, 1], y_lines[:, 1], z_lines[:, 1] = Xp_np[:, 0], Xp_np[:, 1], Xp_np[:, 2]
         x_lines[:, 2] = y_lines[:, 2] = z_lines[:, 2] = np.nan
 
+        # --- Evaluate KDE on grid ---
+        if show_kde and f_explicit:
+            kde = KernelDensity(bandwidth=0.25)
+            kde.fit(Xp_np[:, :2])
 
+            grid_xy = np.column_stack([X0.ravel(), X1.ravel()])
+            log_dens = kde.score_samples(grid_xy)
+            dens = np.exp(log_dens).reshape(X0.shape)
+
+            # --- Extract contour lines in XY ---
+            levels = np.linspace(dens.min(), dens.max(), n_isolines)[2:-1]
+
+            contours = []
+            for lev in levels:
+                cs = measure.find_contours(dens, lev)
+                for c in cs:
+                    iy, ix = c.T
+                    x_line = np.interp(ix, np.arange(X0.shape[1]), X0[0])
+                    y_line = np.interp(iy, np.arange(X0.shape[0]), X1[:, 0])
+                    xy = jnp.stack([x_line, y_line], axis=1)
+                    z_line = np.asarray(vmap(f_explicit)(xy))
+                    contours.append((x_line, y_line, z_line))
         # Paraboloid surface
         if f_explicit is not None:
             fig.add_trace(go.Surface(
@@ -227,6 +251,18 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
                lighting=dict(ambient=1, diffuse=0, specular=0, roughness=1, fresnel=0)
             ))
 
+        if show_kde and f_explicit:
+            # --- KDE isolines on the manifold ---
+            for x_line, y_line, z_line in contours:
+                fig.add_trace(go.Scatter3d(
+                    x=x_line,
+                    y=y_line,
+                    z=z_line,
+                    mode="lines",
+                    line=dict(color="black", width=3),
+                    name="KDE isoline",
+                    showlegend=False
+                ))
         # Projected points
         fig.add_trace(go.Scatter3d(
             x=Xp_np[:, 0], y=Xp_np[:, 1], z=Xp_np[:, 2],
@@ -289,6 +325,6 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
     fig.update_layout(title='Surface and projections',
                       scene=dict(xaxis_title='X Axis', yaxis_title='Y Axis', zaxis_title='Z Axis', aspectmode='cube'),
                       legend=dict(itemsizing="constant"),
-                      height=800)
+                      width=width, height=height)
 
     return fig

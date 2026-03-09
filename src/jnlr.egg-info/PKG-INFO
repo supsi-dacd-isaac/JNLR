@@ -14,6 +14,7 @@ Requires-Dist: numpy>=2.3.2
 Requires-Dist: optax>=0.2.5
 Requires-Dist: plotly>=6.3.0
 Requires-Dist: pygeodesic>=0.1.11
+Requires-Dist: scikit-image>=0.26.0
 Requires-Dist: scikit-learn>=1.7.1
 Dynamic: license-file
 
