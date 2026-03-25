@@ -13,7 +13,7 @@ def _default_dtype():
     """Return float64 if x64 is enabled, else float32."""
     return jnp.float64 if jax.config.jax_enable_x64 else jnp.float32
 
-def chose_solvers(phi):
+def choose_solvers(phi):
     """
     Try different solvers of increasing complexity until one works without NaNs.
     Args:
@@ -262,7 +262,7 @@ def langevin_implicit(phi, *, n_samples=2000, burn=200, thin=1,
     d_tot, d_out = infer_io_shapes(phi)
     d_tot = d_tot[0]
 
-    solver, solver_class = chose_solvers(phi)
+    solver, solver_class = choose_solvers(phi)
 
     if x0 is None:
         dtype = _default_dtype()

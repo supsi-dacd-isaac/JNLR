@@ -2,20 +2,40 @@ Metadata-Version: 2.4
 Name: jnlr
 Version: 0.1.0
 Summary: Jax-based library for nonlinear reconciliation and learning
+Author-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
+Maintainer-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/SUPSI-DACD-ISAAC/JNLR
+Project-URL: Documentation, https://supsi-dacd-isaac.github.io/JNLR/
+Project-URL: Repository, https://github.com/SUPSI-DACD-ISAAC/JNLR
+Project-URL: Issues, https://github.com/SUPSI-DACD-ISAAC/JNLR/issues
+Keywords: jax,reconciliation,nonlinear,manifold,geodesics,optimization,constraint-satisfaction
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: diffrax>=0.7.0
 Requires-Dist: jax>=0.7.1
-Requires-Dist: mkdocs>=1.6.1
-Requires-Dist: mkdocs-material>=9.6.18
-Requires-Dist: mkdocstrings[python]>=0.30.0
-Requires-Dist: numpy>=2.3.2
+Requires-Dist: numpy>=2.1.0
 Requires-Dist: optax>=0.2.5
 Requires-Dist: plotly>=6.3.0
 Requires-Dist: pygeodesic>=0.1.11
 Requires-Dist: scikit-image>=0.26.0
 Requires-Dist: scikit-learn>=1.7.1
+Requires-Dist: scipy>=1.14.0
+Requires-Dist: tqdm>=4.60.0
+Provides-Extra: docs
+Requires-Dist: mkdocs>=1.6.1; extra == "docs"
+Requires-Dist: mkdocs-material>=9.6.18; extra == "docs"
+Requires-Dist: mkdocstrings[python]>=0.30.0; extra == "docs"
 Dynamic: license-file
 
 # JNLR Jax-based non-linear reconciliation and learning 

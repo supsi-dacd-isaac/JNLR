@@ -7,20 +7,59 @@ name = "jnlr"
 version = "0.1.0"
 description = "Jax-based library for nonlinear reconciliation and learning"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.12"
+authors = [
+    {name = "Lorenzo Nespoli", email = "lorenzo.nespoli@supsi.ch"},
+]
+maintainers = [
+    {name = "Lorenzo Nespoli", email = "lorenzo.nespoli@supsi.ch"},
+]
+keywords = [
+    "jax",
+    "reconciliation",
+    "nonlinear",
+    "manifold",
+    "geodesics",
+    "optimization",
+    "constraint-satisfaction",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "diffrax>=0.7.0",
     "jax>=0.7.1",
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.18",
-    "mkdocstrings[python]>=0.30.0",
     "numpy>=2.1.0",
     "optax>=0.2.5",
     "plotly>=6.3.0",
     "pygeodesic>=0.1.11",
     "scikit-image>=0.26.0",
     "scikit-learn>=1.7.1",
+    "scipy>=1.14.0",
+    "tqdm>=4.60.0",
 ]
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.18",
+    "mkdocstrings[python]>=0.30.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/SUPSI-DACD-ISAAC/JNLR"
+Documentation = "https://supsi-dacd-isaac.github.io/JNLR/"
+Repository = "https://github.com/SUPSI-DACD-ISAAC/JNLR"
+Issues = "https://github.com/SUPSI-DACD-ISAAC/JNLR/issues"
 
 [dependency-groups]
 dev = [

@@ -2,9 +2,6 @@ import jax
 import jax.numpy as jnp
 from functools import partial
 import numpy as np
-from scipy.sparse.csgraph import dijkstra
-from sklearn.neighbors import NearestNeighbors
-import pygeodesic.geodesic as geodesic
 from jnlr.utils.function_utils import infer_io_shapes
 from jnlr.utils.log_utils import configure_logging
 from jnlr.utils.meshes import get_mesh
@@ -68,17 +65,6 @@ def make_energy_pushforward(phi):
 
 
 
-
-# --- 4. Geodesic Jaxable wrappers ---
-
-def g_mmp():
-    pass
-
-def g_graph():
-    pass
-
-def g_shooting():
-    pass
 
 
 class GeodesicSolver:

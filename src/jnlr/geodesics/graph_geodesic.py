@@ -26,7 +26,10 @@ def geo_graph_inner(adj_matrix, start_idx, end_idx):
 
     # 4. Reconstruct the path with an error check
     if dist_matrix[end_idx] == np.inf:
-        print("Error: The end point is unreachable from the start point in the k-NN graph.")
+        import logging
+        logging.getLogger(__name__).warning(
+            "End point is unreachable from the start point in the k-NN graph."
+        )
         return [], np.inf
 
     path_indices = [end_idx]

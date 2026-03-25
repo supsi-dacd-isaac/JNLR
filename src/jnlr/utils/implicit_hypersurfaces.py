@@ -66,7 +66,7 @@ def _soft_min(a: float, b: float, k: float) -> float:
 
     When ``k`` is zero, this is equivalent to ``min(a, b)``.  Positive
     values of ``k`` make the transition between the two distances
-    smoother.  Mirrors the ``smin`` function used in the shaders【785499543551541†L76-L84】.
+    smoother.  Mirrors the ``smin`` function used in the shaders.
     """
     h = jnp.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
     return jnp.where(k != 0.0,
@@ -79,7 +79,7 @@ def _soft_max(a: float, b: float, k: float) -> float:
 
     This is the complement to ``_soft_min`` and is used when blending
     additive features onto a shape.  It corresponds to the ``smax``
-    function in some of the GLSL code【785499543551541†L86-L90】.
+    function in some of the GLSL code.
     """
     return _soft_min(a, b, -k)
 
@@ -93,7 +93,7 @@ def sd_ellipsoid(p: jnp.ndarray, r: jnp.ndarray) -> float:
     """Signed distance to an axis‑aligned ellipsoid.
 
     ``r`` contains the semi‑axis lengths in x, y and z.  The formula
-    matches that used in both the MantaRay and Tardigrade shaders【49612677301266†L42-L44】.
+    matches that used in both the MantaRay and Tardigrade shaders.
     """
     k0 = jnp.linalg.norm(p / r)
     k1 = jnp.linalg.norm(p / (r * r))
@@ -136,7 +136,7 @@ def sd_capsule(p: jnp.ndarray, a: jnp.ndarray, b: jnp.ndarray, r: float) -> floa
     """Signed distance to a capsule with endpoints ``a`` and ``b`` and radius ``r``.
 
     The capsule consists of a cylinder and hemispherical end caps.  This
-    matches the ``sdCapsule`` helper used in the human skull shader【903968926017913†L194-L201】.
+    matches the ``sdCapsule`` helper used in the human skull shader.
     """
     ab = b - a
     ap = p - a
@@ -152,7 +152,7 @@ def sd_cone_frustum(p: jnp.ndarray, a: jnp.ndarray, r1: float, r2: float, h: flo
     Implements the distance to a cone with radii ``r1`` and ``r2`` at
     the ends of a segment of length ``h`` along the y–axis, centred at
     ``a``.  Mirrors the frustum form used for the jaw and nose in the
-    human skull shader【903968926017913†L172-L191】.
+    human skull shader.
     """
     # JAX does not permit list indexing; extract components explicitly
     pa = p - a
@@ -188,7 +188,7 @@ def sd_box_oriented(p: jnp.ndarray, center: jnp.ndarray, right: jnp.ndarray,
     axes; the third axis is ``cross(right, up)``.  ``dim`` contains
     half sizes along these axes.  ``r`` rounds the edges by subtracting
     a constant.  This corresponds to the ``sdBox`` overload used in
-    the human skull shader【903968926017913†L150-L161】.
+    the human skull shader.
     """
     # Build orthonormal basis
     fwd = jnp.cross(right, up)
@@ -205,7 +205,7 @@ def _quaternion_rotate(p: jnp.ndarray, axis: jnp.ndarray, angle_deg: float) -> j
     """Rotate ``p`` about ``axis`` by ``angle_deg`` degrees using quaternions.
 
     The Tardigrade shader uses a quaternion‑based rotation helper to
-    orient ellipsoids and claws【49612677301266†L21-L31】.  This function
+    orient ellipsoids and claws.  This function
     reproduces that behaviour.  ``angle_deg`` is interpreted as
     degrees; internally it is converted to radians for trigonometric
     functions.
@@ -224,7 +224,7 @@ def _quaternion_rotate(p: jnp.ndarray, axis: jnp.ndarray, angle_deg: float) -> j
 def _op_rep(p: jnp.ndarray, c: jnp.ndarray) -> jnp.ndarray:
     """Periodic repetition of space.
 
-    Replicates the ``opRep`` helper used for the tardigrade's teeth【49612677301266†L88-L93】.
+    Replicates the ``opRep`` helper used for the tardigrade's teeth.
     Returns ``mod(p, c) - 0.5 * c`` for each coordinate.
     """
     return jnp.mod(p, c) - 0.5 * c
@@ -240,14 +240,14 @@ def _rotate_2d(v: jnp.ndarray, angle: float) -> jnp.ndarray:
 def sdf_tardigrade(p: jnp.ndarray) -> float:
     """Signed distance to a tardigrade.
 
-    This function follows the structure of the tardigrade shader【49612677301266†L95-L168】.
+    This function follows the structure of the tardigrade shader.
     The body is constructed by blending a series of ellipsoids for the
     torso and head, subtracting a back opening, and then attaching
     four legs composed of ellipsoids and claws.  A small mouth with
     teeth is added on the front.  Texture‑based displacements present
     in the original shader are omitted for simplicity.
     """
-    # Scale the input as in the GLSL wrapper【49612677301266†L171-L174】
+    # Scale the input as in the GLSL wrapper
     scale = 0.3
     q = p / scale
     # Body sections
@@ -256,16 +256,16 @@ def sdf_tardigrade(p: jnp.ndarray) -> float:
     body_front2 = sd_ellipsoid(_quaternion_rotate(q + jnp.array([0.0, 0.3, 1.5]), jnp.array([1.0, 0.0, 0.0]), 40.0), jnp.array([0.7, 0.5, 0.7]))
     body_back = sd_ellipsoid(_quaternion_rotate(q + jnp.array([0.0, 0.0, -0.6]), jnp.array([1.0, 0.0, 0.0]), -10.0), jnp.array([1.0, 0.75, 1.0]))
     body_back_hole = sd_ellipsoid(q + jnp.array([0.0, 0.2, -1.5]), jnp.array([0.03, 0.03, 0.5]))
-    # Blend body parts【49612677301266†L115-L118】
+    # Blend body parts
     s = 0.01
     body = _soft_max(_soft_min(_soft_min(body_center, _soft_min(body_front, body_front2, s), s), body_back, s), -body_back_hole, 0.15)
-    # Mouth【49612677301266†L124-L139】
+    # Mouth
     mouth0 = sd_sphere(q + jnp.array([0.0, 0.7, 2.25]), 0.15)
     mouth1 = sd_ellipsoid(q + jnp.array([0.0, 0.6, 2.125]), jnp.array([0.22, 0.175, 0.175]))
     mouth2 = sd_ellipsoid(q + jnp.array([0.0, 0.67, 2.25]), jnp.array([0.125, 0.1, 0.2]))
     # Teeth
     def teeth_fn(pt: jnp.ndarray) -> float:
-        # Convert to polar coordinates and repeat【49612677301266†L82-L92】
+        # Convert to polar coordinates and repeat
         polar_x = jnp.arctan2(pt[0], pt[1]) / jnp.pi
         polar_y = jnp.linalg.norm(pt[jnp.array([0, 1])]) - 0.12
         polar_z = pt[2]
@@ -274,12 +274,12 @@ def sdf_tardigrade(p: jnp.ndarray) -> float:
         p2 = p2.at[2].set(pt[2])
         return sd_ellipsoid(p2, jnp.array([0.07, 0.05, 0.07]))
     teeth0 = teeth_fn(_quaternion_rotate(q + jnp.array([0.0, 0.62, 2.15]), jnp.array([1.0, 0.0, 0.0]), 35.0))
-    # Head【49612677301266†L133-L139】
+    # Head
     head = sd_ellipsoid(_quaternion_rotate(q + jnp.array([0.0, 0.45, 1.9]), jnp.array([1.0, 0.0, 0.0]), 50.0), jnp.array([0.45, 0.3, 0.5]))
     head = jnp.minimum(_soft_max(_soft_min(mouth1, _soft_max(head, -mouth0, 0.3), s), -mouth0, 0.02), teeth0)
-    # Legs【49612677301266†L145-L161】
+    # Legs
     def claw(pos: jnp.ndarray, size: jnp.ndarray, angles: jnp.ndarray) -> float:
-        # Claw constructed from three rotated ellipsoids and limited by y【49612677301266†L60-L72】
+        # Claw constructed from three rotated ellipsoids and limited by y
         a = pos[1] * angles[3] + angles[:3]
         c1 = sd_ellipsoid(_quaternion_rotate(pos, jnp.array([0.0, 0.0, 1.0]), a[0]), size)
         c2 = sd_ellipsoid(_quaternion_rotate(pos + jnp.array([0.0, 0.0, size[0]]), jnp.array([1.0, 0.0, 1.0]), a[1]), size)

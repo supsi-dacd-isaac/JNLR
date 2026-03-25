@@ -1,6 +1,6 @@
 # JNLR Jax-based non-linear reconciliation and learning 
 
-![JNLR Logo](notebooks/logo.svg)
+![JNLR Logo](docs/logo.webp)
 
 **J-NLR** is a Python library for non-linear reconciliation, learning, and geometric analysis on constraint manifolds. Built on [JAX](https://github.com/google/jax), it leverages automatic differentiation and GPU/TPU acceleration to efficiently project predicted values onto surfaces defined by implicit constraints $f(z) = 0$.
 

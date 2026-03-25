@@ -129,7 +129,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
 
 def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, round_cutoff=1.5, W=None, n_iterations=10,
                        solver_builder=None, plot_history=False, colorscale="Purples", lo=None, hi=None,
-                       remove_axes=False, proj_alpha=1.0,
+                       remove_axes=False, proj_alpha=1.0, surf_alpha=0.55,
                        orig_color="rgba(120,120,120,0.9)", orig_size=2,
                        proj_color="crimson", proj_size=2, n_grid=80, shrink_projection=False, show_kde=False, n_isolines=7,
                        width=800, height=800,
@@ -233,7 +233,7 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
         if f_explicit is not None:
             fig.add_trace(go.Surface(
                 x=X0, y=X1, z=Z,
-                colorscale=colorscale, showscale=False, opacity=0.55, name="surface",
+                colorscale=colorscale, showscale=False, opacity=surf_alpha, name="surface",
                 lighting=dict(ambient=1, diffuse=0, specular=0, roughness=1, fresnel=0),
             ))
         else:
@@ -243,7 +243,7 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
                y=X1,
                z=Z,
                alphahull=0,
-               opacity=0.55,
+               opacity=surf_alpha,
                intensity=Z,
                colorscale=colorscale,
                showscale=False,
