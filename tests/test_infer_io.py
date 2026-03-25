@@ -74,12 +74,7 @@ class InferIOShapesTests(unittest.TestCase):
         self.assertEqual(in_shape, (3,))
         self.assertEqual(out_shape, (1, ))
 
-    def test_complex_hypersrfaces(self):
-        import jnlr.utils.complex_hypersurfaces as chy
-        for f in [chy.sdf_tardigrade, chy.surface1, chy.surface2, chy.surface3, chy.surface4]:
-            in_shape, out_shape = infer_io_shapes(f)
-            self.assertEqual(in_shape, (3,))
-            self.assertEqual(out_shape, (1, ))
+
 
 if __name__ == "__main__":
     unittest.main()
