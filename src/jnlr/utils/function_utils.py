@@ -57,7 +57,7 @@ def _try_eval_shape(f, D, dtype):
         return False, None
 
 
-def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=21):
+def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=1000):
     # Finds the smallest D where f accepts a (D,) input and either:
     #   - f rejects (D+1,)  (exact-length signature), or
     #   - f accepts (D+1,) with a stable output shape/value, and
@@ -105,7 +105,7 @@ def infer_min_input_size(f, *, dtype=jnp.float32, max_dim=21):
 
         cached_next = (okNext, shapeNext, None)
 
-    raise ValueError("Could not infer minimal input size up to max_dim.")
+    raise ValueError(f"Could not infer minimal input size up to max_dim {max_dim}")
 
 
 def infer_io_shapes(f, *, dtype=jnp.float32, d_input=None):
