@@ -28,11 +28,16 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install --system -e ".[docs]"
+          python -c "import plotly; print(f'plotly {plotly.__version__} installed')"
 
-      - name: Convert notebooks to Markdown with Plotly
+      - name: Convert notebooks to Markdown
         run: |
           python scripts/convert_notebooks_to_md.py
+          if ! ls docs/examples/plots/*.html >/dev/null 2>&1; then
+            echo "::error::No plot HTML files generated. Are notebooks committed with cell outputs?"
+            exit 1
+          fi
+          echo "Generated $(ls docs/examples/plots/*.html | wc -l) interactive plots"
 
       - name: Deploy documentation
         run: mkdocs gh-deploy --force
-
