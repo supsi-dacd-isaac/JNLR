@@ -13,6 +13,7 @@ src/jnlr.egg-info/top_level.txt
 src/jnlr/geodesics/__init__.py
 src/jnlr/geodesics/_generate.py
 src/jnlr/geodesics/compute.py
+src/jnlr/geodesics/generate.py
 src/jnlr/geodesics/graph_geodesic.py
 src/jnlr/geodesics/mmp.py
 src/jnlr/geodesics/scores.py

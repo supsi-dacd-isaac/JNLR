@@ -14,7 +14,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
                      edge_color: str = "black",
                      edge_width: float = 1.0,
                      opacity: float = .8, title="Mesh",
-                     lines=None, points=None, colorscale="Purples", line_color=None):
+                     lines=None, points=None, colorscale="Purples", line_color=None, width=800, height=800):
     """
     Plot a triangular mesh with Plotly.
 
@@ -118,11 +118,10 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
             zaxis=dict(visible=False),
             aspectmode="cube"
         ),
-        height=800,
         margin=dict(l=0, r=0, b=0, t=0),
-        title=title
-    )
-
+        title=title,
+        width = width,
+        height = height)
 
     return fig
 
@@ -322,9 +321,15 @@ def plot_3d_projection(X, f_explicit=None, f_implicit=None, square_cutoff=1.5, r
     ))
 
 
-    fig.update_layout(title='Surface and projections',
-                      scene=dict(xaxis_title='X Axis', yaxis_title='Y Axis', zaxis_title='Z Axis', aspectmode='cube'),
-                      legend=dict(itemsizing="constant"),
+    fig.update_layout(scene=dict(xaxis_title='X Axis', yaxis_title='Y Axis', zaxis_title='Z Axis', aspectmode='cube'),
+                      #legend=dict(itemsizing="constant"),
                       width=width, height=height)
+
+    fig.update_layout(
+        scene=dict(
+            camera=dict(eye=dict(x=1.1, y=1.1, z=1.6)),  # Adjust these to "zoom" in
+        ),
+        margin=dict(l=50, r=50, b=50, t=50)
+    )
 
     return fig

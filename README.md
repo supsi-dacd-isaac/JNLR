@@ -1,8 +1,10 @@
-# JNLR Jax-based non-linear reconciliation and learning 
-
-<p align="center">
-  <img src="docs/logo.webp" alt="JNLR Logo" width="300">
-</p>
+<div style="display:flex;align-items:center;gap:1.2rem;">
+  <img src="docs/logo.webp" alt="JNLR Logo" width="120">
+  <div>
+    <h1 style="margin:0;">JNLR</h1>
+    <p style="margin:0;">JAX-based non-linear reconciliation and learning</p>
+  </div>
+</div>
 
 **J-NLR** is a Python library for non-linear reconciliation, learning, and geometric analysis on constraint manifolds. Built on [JAX](https://github.com/google/jax), it leverages automatic differentiation and GPU/TPU acceleration to efficiently project predicted values onto surfaces defined by implicit constraints $f(z) = 0$.
 
@@ -10,13 +12,24 @@
 
 ## Key Features
 
-- **Non-linear Reconciliation**: Multiple solvers (Augmented Lagrangian, curvature-aware Newton, vanilla projections) for projecting forecasts onto constraint manifolds
-- **SHOULD Analysis**: Curvature-based methods to determine *when* reconciliation is beneficial—verify if RMSE is guaranteed to reduce before applying corrections
-- **Manifold Sampling**: Sample from explicit (graph) or implicit manifolds using volume-weighted sampling, Latin hypercube, or Langevin dynamics on the constraint surface
-- **Mesh Generation**: Create triangulated meshes from explicit parameterizations for visualization and geodesic computation
-- **Geodesics**: Compute geodesic distances and shortest paths on manifolds via exact MMP algorithm or fast graph-based approximations; includes probabilistic scores like pointcloud geodesic distance
-- **Visualization**: Interactive 3D rendering of manifolds, projections, and geodesic paths with Plotly
-- **JAX-native**: Fully JIT-compiled and vectorized (`vmap`) for high-performance batch processing
+- **Non-linear Reconciliation** — Multiple solvers (Augmented Lagrangian, curvature-aware Newton, vanilla projections) for projecting forecasts onto constraint manifolds defined by $f(z)=0$, each respecting a user-defined weighting matrix $W$.
+  [▶ Interactive example](https://supsi-dacd-isaac.github.io/JNLR/examples/projection_hypersurfaces/)
+
+- **SHOULD Analysis** — Curvature-based methods to determine *when* reconciliation is beneficial. Analyse the local curvature of the constraint surface and the distribution of prediction errors to verify whether RMSE is guaranteed to reduce before applying any correction.
+  [▶ Interactive example](https://supsi-dacd-isaac.github.io/JNLR/examples/should/)
+
+- **Manifold Sampling** — Sample from explicit (graph) or implicit manifolds using volume-weighted random sampling, Latin hypercube designs, or Langevin dynamics constrained to the surface — useful for Monte-Carlo estimation and training-set augmentation.
+  [▶ Interactive example](https://supsi-dacd-isaac.github.io/JNLR/examples/samplers/)
+
+- **Mesh Generation** — Create triangulated meshes from explicit parameterisations for visualisation and exact geodesic computation.
+  [▶ Interactive example](https://supsi-dacd-isaac.github.io/JNLR/examples/meshes/)
+
+- **Geodesics** — Compute geodesic distances and shortest paths on manifolds via the exact Mitchell–Mount–Papadimitriou (MMP) algorithm or fast graph-based approximations. Includes the *pointcloud geodesic distance*, a probabilistic score for distributional shifts on curved spaces.
+  [▶ Interactive example](https://supsi-dacd-isaac.github.io/JNLR/examples/compute_geodesics/)
+
+- **Visualization** — Interactive 3D rendering of manifolds, projections, sampling distributions, and geodesic paths with [Plotly](https://plotly.com/python/). All example notebooks include fully interactive, rotatable plots — [explore them in the docs](https://supsi-dacd-isaac.github.io/JNLR/).
+
+- **JAX-native** — Fully JIT-compiled and vectorized (`vmap`) for high-performance batch processing. Automatic differentiation provides exact Jacobians and Hessians without finite-difference approximations.
 
 
 ## Running the notebooks

@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: jnlr
-Version: 0.1.0
+Version: 0.1.1
 Summary: Jax-based library for nonlinear reconciliation and learning
 Author-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
 Maintainer-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
@@ -40,7 +40,9 @@ Dynamic: license-file
 
 # JNLR Jax-based non-linear reconciliation and learning 
 
-![JNLR Logo](notebooks/logo.svg)
+<p align="center">
+  <img src="docs/logo.webp" alt="JNLR Logo" width="300">
+</p>
 
 **J-NLR** is a Python library for non-linear reconciliation, learning, and geometric analysis on constraint manifolds. Built on [JAX](https://github.com/google/jax), it leverages automatic differentiation and GPU/TPU acceleration to efficiently project predicted values onto surfaces defined by implicit constraints $f(z) = 0$.
 
