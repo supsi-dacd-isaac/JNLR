@@ -1,8 +1,7 @@
 <img src="docs/logo.webp" alt="JNLR Logo" width="120" align="left">
 
-# JNLR
-
-**JAX-based non-linear reconciliation and learning**
+### JNLR
+JAX-based non-linear reconciliation and learning
 
 <br clear="left">
 
