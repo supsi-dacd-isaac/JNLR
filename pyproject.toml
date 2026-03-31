@@ -61,8 +61,13 @@ Documentation = "https://supsi-dacd-isaac.github.io/JNLR/"
 Repository = "https://github.com/SUPSI-DACD-ISAAC/JNLR"
 Issues = "https://github.com/SUPSI-DACD-ISAAC/JNLR/issues"
 
+[tool.coverage.run]
+source = ["src/jnlr"]
+branch = true
+
 [dependency-groups]
 dev = [
+    "pytest-cov>=6.0.0",
     "ipykernel>=7.1.0",
     "nbformat>=4.2.0",
     "nbconvert>=7.0.0",
