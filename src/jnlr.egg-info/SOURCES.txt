@@ -27,5 +27,16 @@ src/jnlr/utils/manifolds.py
 src/jnlr/utils/meshes.py
 src/jnlr/utils/plot_utils.py
 src/jnlr/utils/samplers.py
+tests/test_curvature_utils.py
+tests/test_geodesics_modules.py
+tests/test_graph_geodesic_and_scores.py
+tests/test_implicit_hypersurfaces_all.py
 tests/test_infer_io.py
+tests/test_log_utils.py
+tests/test_manifolds_all.py
+tests/test_meshes_geodesics_smoke.py
+tests/test_plot_utils_smoke.py
+tests/test_reconcile_extended.py
+tests/test_samplers.py
 tests/test_should.py
+tests/test_stats.py

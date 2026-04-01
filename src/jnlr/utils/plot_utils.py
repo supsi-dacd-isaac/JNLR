@@ -14,7 +14,8 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
                      edge_color: str = "black",
                      edge_width: float = 1.0,
                      opacity: float = .8, title="Mesh",
-                     lines=None, points=None, colorscale="Purples", line_color=None, width=800, height=800):
+                     lines=None, points=None, colorscale="Purples", line_color=None, points_color="crimson",
+                     width=800, height=800):
     """
     Plot a triangular mesh with Plotly.
 
@@ -107,7 +108,7 @@ def plot_mesh_plotly(vertices: np.ndarray, triangles: np.ndarray, *,
         fig.add_trace(go.Scatter3d(
             x=points[:, 0], y=points[:, 1], z=points[:, 2],
             mode="markers",
-            marker=dict(size=4, color="rgba(120,120,120,0.9)"),
+            marker=dict(size=4, color=points_color),
             hoverinfo="none",
         ))
 

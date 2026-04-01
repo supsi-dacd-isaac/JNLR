@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: jnlr
-Version: 0.1.1
+Version: 0.1.2
 Summary: Jax-based library for nonlinear reconciliation and learning
 Author-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
 Maintainer-email: Lorenzo Nespoli <lorenzo.nespoli@supsi.ch>
@@ -47,9 +47,43 @@ JAX-based non-linear reconciliation and learning
 
 **J-NLR** is a Python library for non-linear reconciliation, learning, and geometric analysis on constraint manifolds. Built on [JAX](https://github.com/google/jax), it leverages automatic differentiation and GPU/TPU acceleration to efficiently project predicted values onto surfaces defined by implicit constraints $f(z) = 0$.
 
+[![PyPI version](https://img.shields.io/pypi/v/JNLR)](https://pypi.org/project/JNLR/)
+[![Python version](https://img.shields.io/pypi/pyversions/JNLR)](https://pypi.org/project/JNLR/)
+[![License](https://img.shields.io/pypi/l/JNLR)](https://github.com/a-paulus/JNLR/blob/main/LICENSE)
 [![codecov](https://codecov.io/gh/supsi-dacd-isaac/JNLR/graph/badge.svg?branch=main)](https://codecov.io/gh/supsi-dacd-isaac/JNLR)
 
 📚 **[Documentation](https://supsi-dacd-isaac.github.io/JNLR/)** - Full API reference, examples, and interactive notebooks
+
+## Minimal projection example
+ [▶ Minimal projection example](https://supsi-dacd-isaac.github.io/JNLR/examples/projection_minimal_example/)
+```python
+import numpy as np
+from jnlr.reconcile import make_solver
+
+# generate gaussian samples in 3d
+# and reproject them onto the constraint
+n_samples = 1000
+X = np.random.randn(n_samples, 3)
+
+# define a constraint as an implicit function.
+# Each component of the function (1 in this case) returns
+# how far a point is from the surface of the constraint
+def f_implicit(v):
+    z1, z2, z3 = v
+    return z1**2 + z2**2 - z3**2
+
+solver = make_solver(f_implicit, n_iterations=30)
+X_proj = solver(X)
+incoherence_pre = np.mean(np.abs([f_implicit(x_i) for x_i in X]))
+incoherence_post = np.mean(np.abs([f_implicit(x_i) for x_i in X_proj]))
+print("mean abs f before projection: {:0.2e}".format(incoherence_pre))
+print("mean abs f after projection: {:0.2e}".format(incoherence_post))
+```
+response: 
+```
+mean abs f before projection: 1.84e+00
+mean abs f after projection: 1.91e-09
+```
 
 ## Key Features
 
@@ -71,11 +105,6 @@ JAX-based non-linear reconciliation and learning
 - **Visualization** — Interactive 3D rendering of manifolds, projections, sampling distributions, and geodesic paths with [Plotly](https://plotly.com/python/). All example notebooks include fully interactive, rotatable plots — [explore them in the docs](https://supsi-dacd-isaac.github.io/JNLR/).
 
 - **JAX-native** — Fully JIT-compiled and vectorized (`vmap`) for high-performance batch processing. Automatic differentiation provides exact Jacobians and Hessians without finite-difference approximations.
-
-
-## Running the notebooks
-If you want to run the notebooks, the suggested way is to install `uv` packet manager, cloning the repo and, from a terminal:
-`uv pip install -e .`
 
 
 ## Citation

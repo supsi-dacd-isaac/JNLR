@@ -8,6 +8,12 @@
 
 **J-NLR** is a Python library for non-linear reconciliation, learning, and geometric analysis on constraint manifolds. Built on [JAX](https://github.com/google/jax), it leverages automatic differentiation and GPU/TPU acceleration to efficiently project predicted values onto surfaces defined by implicit constraints $f(z) = 0$.
 
+<div class="plotly-figure" style="margin-bottom:1rem;">
+    <p align="center">
+      <img src="assets/notebook_reel_merged.webp" alt="Turntable preview: geodesics, meshes, projection, and sampling from the example notebooks" style="max-width:640px;width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+    </p>
+    <p align="center" style="font-size:.9rem;opacity:.85;margin-top:.35rem;">Example notebooks — geodesics, meshes, projection, and sampling (<code>scripts/render_notebook_spin_reel.py</code>)</p>
+</div>
 
 <div class="plotly-figure">
     <p align="center">
