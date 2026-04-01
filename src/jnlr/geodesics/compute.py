@@ -107,10 +107,10 @@ class GeodesicSolver:
             raise ValueError(f"Unknown method: {self.method}")
 
     def set_samples(self, samples):
-
-        if self.samples.ndim != 2 or self.samples.shape[1] != self.n_inputs[0] + self.n_outputs[0]:
+        samples = np.asarray(samples)
+        if samples.ndim != 2 or samples.shape[1] != self.n_inputs[0] + self.n_outputs[0]:
             raise ValueError(f"Samples must be of shape (N, {self.n_inputs[0] + self.n_outputs[0]:})")
-        self.samples = np.asarray(samples)
+        self.samples = samples
         self.n_samples = self.samples.shape[0]
 
     def set_mesh(self, vertices, triangles):
