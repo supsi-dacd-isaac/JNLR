@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jnlr"
-version = "0.1.1"
+version = "0.1.2"
 description = "Jax-based library for nonlinear reconciliation and learning"
 readme = "README.md"
 license = "MIT"
@@ -36,6 +36,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
+    "build>=1.4.2",
     "diffrax>=0.7.0",
     "jax>=0.7.1",
     "numpy>=2.1.0",

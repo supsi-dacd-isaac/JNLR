@@ -22,6 +22,7 @@ Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: build>=1.4.2
 Requires-Dist: diffrax>=0.7.0
 Requires-Dist: jax>=0.7.1
 Requires-Dist: numpy>=2.1.0
@@ -53,6 +54,11 @@ JAX-based non-linear reconciliation and learning
 [![codecov](https://codecov.io/gh/supsi-dacd-isaac/JNLR/graph/badge.svg?branch=main)](https://codecov.io/gh/supsi-dacd-isaac/JNLR)
 
 📚 **[Documentation](https://supsi-dacd-isaac.github.io/JNLR/)** - Full API reference, examples, and interactive notebooks
+
+<p align="center">
+  <img src="docs/assets/notebook_reel_merged.webp" alt="Turntable preview: geodesics, meshes, projection, and sampling from the example notebooks" width="640">
+</p>
+
 
 ## Minimal projection example
  [▶ Minimal projection example](https://supsi-dacd-isaac.github.io/JNLR/examples/projection_minimal_example/)

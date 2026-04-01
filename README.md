@@ -17,7 +17,7 @@ JAX-based non-linear reconciliation and learning
 <p align="center">
   <img src="docs/assets/notebook_reel_merged.webp" alt="Turntable preview: geodesics, meshes, projection, and sampling from the example notebooks" width="640">
 </p>
-<p align="center"><em>Example notebooks (geodesics, meshes, projection, sampling) — see <code>scripts/render_notebook_spin_reel.py</code></em></p>
+
 
 ## Minimal projection example
  [▶ Minimal projection example](https://supsi-dacd-isaac.github.io/JNLR/examples/projection_minimal_example/)
