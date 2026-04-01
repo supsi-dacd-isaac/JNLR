@@ -182,6 +182,7 @@ if __name__ == "__main__":
     notebooks = [
         "compute_geodesics.ipynb",
         "meshes.ipynb",
+        "projection_minimal_example.ipynb",
         "projection_hypersurfaces.ipynb",
         "samplers.ipynb",
         "should.ipynb",

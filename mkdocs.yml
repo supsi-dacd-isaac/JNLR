@@ -41,6 +41,7 @@ nav:
   - Examples:
       - Geodesics: examples/compute_geodesics.md
       - Meshes: examples/meshes.md
+      - Minimal projection: examples/projection_minimal_example.md
       - Projection Hypersurfaces: examples/projection_hypersurfaces.md
       - Samplers: examples/samplers.md
       - SHOULD Analysis: examples/should.md
