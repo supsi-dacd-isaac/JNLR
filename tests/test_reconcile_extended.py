@@ -13,13 +13,17 @@ class ReconcileExtendedTests(unittest.TestCase):
         self.f = f_impl(f_paraboloid)
 
     def test_make_solver_return_history_shape(self):
-        solver = make_solver(self.f, jnp.eye(3), n_iterations=5, return_history=True)
+        solver = make_solver(
+            self.f, jnp.eye(3, dtype=jnp.float32), n_iterations=5, return_history=True
+        )
         z_hat = jnp.array([[0.3, -0.4, 0.5]], dtype=jnp.float32)
         hist = solver(z_hat)
         self.assertEqual(hist.shape, (1, 5, 3))
 
     def test_make_solver_vmapped_false_single_point(self):
-        solver = make_solver(self.f, jnp.eye(3), n_iterations=10, vmapped=False)
+        solver = make_solver(
+            self.f, jnp.eye(3, dtype=jnp.float32), n_iterations=10, vmapped=False
+        )
         z_hat = jnp.array([0.3, -0.4, 0.5], dtype=jnp.float32)
         z_tilde = solver(z_hat)
         self.assertEqual(z_tilde.shape, (3,))
@@ -35,7 +39,7 @@ class ReconcileExtendedTests(unittest.TestCase):
     def test_make_solver_alm_fixed_lr_branch(self):
         solver = make_solver_alm_optax(
             self.f,
-            jnp.eye(3),
+            jnp.eye(3, dtype=jnp.float32),
             n_iterations=8,
             lbfgs_learning_rate=1.0,
         )
@@ -46,7 +50,7 @@ class ReconcileExtendedTests(unittest.TestCase):
     def test_make_solver_alm_return_history_shape(self):
         solver = make_solver_alm_optax(
             self.f,
-            jnp.eye(3),
+            jnp.eye(3, dtype=jnp.float32),
             n_iterations=4,
             return_history=True,
         )
@@ -57,7 +61,7 @@ class ReconcileExtendedTests(unittest.TestCase):
     def test_make_solver_alm_vmapped_false(self):
         solver = make_solver_alm_optax(
             self.f,
-            jnp.eye(3),
+            jnp.eye(3, dtype=jnp.float32),
             n_iterations=10,
             vmapped=False,
         )

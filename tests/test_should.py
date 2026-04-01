@@ -22,7 +22,9 @@ class ShouldModuleTests(unittest.TestCase):
         self.f_scalar = f_impl(f_paraboloid)
         self.grad_f = jax.grad(self.f_scalar)
         self.hess_f = jax.hessian(self.f_scalar)
-        self.vmapped_solver_scalar = make_solver(self.f_scalar, jnp.eye(3), n_iterations=10)
+        self.vmapped_solver_scalar = make_solver(
+            self.f_scalar, jnp.eye(3, dtype=jnp.float32), n_iterations=10
+        )
 
         # Vector-valued manifold on R^2 with 2 constraints; pick a simple feasible one
         # lin_quad(z) = [x, x^2] -> feasible set is {x = 0}, a proper 1D manifold
@@ -32,7 +34,9 @@ class ShouldModuleTests(unittest.TestCase):
             comps = [jax.hessian(lambda u: self.F_vv(u)[i])(z) for i in range(2)]
             return jnp.stack(comps, axis=0)
         self.hess_F = _hess_F
-        self.vmapped_solver_vv = make_solver(self.F_vv, jnp.eye(4), n_iterations=10)
+        self.vmapped_solver_vv = make_solver(
+            self.F_vv, jnp.eye(4, dtype=jnp.float32), n_iterations=10
+        )
 
     def test_implicit_f(self):
         """
@@ -52,7 +56,7 @@ class ShouldModuleTests(unittest.TestCase):
         m = 1  # number of constraints
 
         z_hat = jnp.array([[0.3, -0.4, 0.7], [0.1, 0.2, 0.7]], dtype=jnp.float32)
-        solver = make_solver(self.f_scalar, jnp.eye(n))
+        solver = make_solver(self.f_scalar, jnp.eye(n, dtype=jnp.float32))
         z_tilde = solver(z_hat)
 
         # Should project close to the origin for this constraint
@@ -65,7 +69,7 @@ class ShouldModuleTests(unittest.TestCase):
         z_hat = jnp.vstack([jnp.hstack([xs_hat[i], f_vv_csc_24(xs_hat[i]) + 0.1*jax.random.normal(jax.random.PRNGKey(0), (m,))]) for i in range(2)])  # shape (4,2)
 
 
-        solver = make_solver(self.F_vv, jnp.eye(n), n_iterations=10)
+        solver = make_solver(self.F_vv, jnp.eye(n, dtype=jnp.float32), n_iterations=10)
         z_tilde = solver(z_hat)
 
         # Should project close to the origin for this constraint

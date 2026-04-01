@@ -125,7 +125,10 @@ def min_tangent_eigenvalue_vv(f, jacobian_f, hessian_f,  z_tilde: jnp.ndarray, z
         return jnp.array([eigvals[0], ratio])
 
     # choose either implementation; both are equivalent and safe
-    return jax.lax.cond(valid_mask, compute_delta, lambda: jnp.ones(2) * jnp.nan)
+    def _nan_branch():
+        return jnp.full((2,), jnp.nan, dtype=z_tilde.dtype)
+
+    return jax.lax.cond(valid_mask, compute_delta, _nan_branch)
 
 
 @partial(jax.jit, static_argnames=('hessian_f'))
