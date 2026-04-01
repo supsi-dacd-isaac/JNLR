@@ -6,7 +6,7 @@ import jax.scipy as jsp
 from functools import partial
 from typing import Optional
 from jnlr.utils.function_utils import infer_io_shapes
-from jnlr.reconcile import make_solver_proj_nt_curv, make_solver, make_solver_alm_optax
+from jnlr.reconcile import make_solver, make_solver_alm_optax
 
 
 def _default_dtype():
@@ -23,7 +23,7 @@ def choose_solvers(phi):
 
     """
     dtype = _default_dtype()
-    for ms in [make_solver, make_solver_proj_nt_curv, make_solver_alm_optax]:
+    for ms in [make_solver, make_solver_alm_optax]:
         d_tot, d_out = infer_io_shapes(phi)
         d_tot = d_tot[0]
         solver = ms(phi, n_iterations=10, return_history=False, vmapped=False)
