@@ -1,4 +1,4 @@
-"""Tests for ``geodesics`` (compute, mmp, shooting, generate, _generate)."""
+"""Tests for ``geodesics`` (compute, mmp, shooting, generate)."""
 
 import os
 
@@ -245,13 +245,6 @@ class GenerateModuleTests(unittest.TestCase):
         self.assertEqual(c.shape, (11,))
         self.assertTrue(jnp.all(jnp.isfinite(c)))
 
-    def test_trapezoid_generate_duplicate_module(self):
-        from jnlr.geodesics import _generate as gen2
-
-        x = jnp.linspace(0.0, 1.0, 8)
-        y = jnp.sin(x)
-        self.assertTrue(jnp.isfinite(gen2.trapezoid_integral(y, x)))
-
     def test_project_velocity_to_tangent(self):
         from jnlr.geodesics import generate as gen
 
@@ -291,18 +284,6 @@ class GenerateModuleTests(unittest.TestCase):
         self.assertEqual(X.shape, (14, 4))
         self.assertTrue(jnp.isfinite(Ltot))
         self.assertEqual(Lcum.shape, (14,))
-
-    def test_integrate_geodesic_implicit_generic_duplicate(self):
-        from jnlr.geodesics import _generate as gen2
-
-        F = f_impl(lin_quad)
-        x0 = jnp.zeros(4, dtype=jnp.float32)
-        v0 = jnp.array([0.02, 0.02, 0.0, 0.0], dtype=jnp.float32)
-        _, X, _, Ltot, _ = gen2.integrate_geodesic_implicit_generic(
-            F, x0, v0, t1=0.2, n_steps=12, project_init=False, project_after=False
-        )
-        self.assertTrue(jnp.isfinite(Ltot))
-        self.assertTrue(jnp.all(jnp.isfinite(X)))
 
 
 if __name__ == "__main__":
