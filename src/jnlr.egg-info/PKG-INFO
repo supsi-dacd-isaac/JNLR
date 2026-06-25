@@ -24,6 +24,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: build>=1.4.2
 Requires-Dist: diffrax>=0.7.0
+Requires-Dist: flax>=0.12.0
 Requires-Dist: jax>=0.7.1
 Requires-Dist: numpy>=2.1.0
 Requires-Dist: optax>=0.2.5

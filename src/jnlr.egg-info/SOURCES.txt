@@ -18,6 +18,8 @@ src/jnlr/geodesics/graph_geodesic.py
 src/jnlr/geodesics/mmp.py
 src/jnlr/geodesics/scores.py
 src/jnlr/geodesics/shooting.py
+src/jnlr/learn/__init__.py
+src/jnlr/learn/map.py
 src/jnlr/utils/__init__.py
 src/jnlr/utils/curvature_utils.py
 src/jnlr/utils/function_utils.py
@@ -32,6 +34,7 @@ tests/test_geodesics_modules.py
 tests/test_graph_geodesic_and_scores.py
 tests/test_implicit_hypersurfaces_all.py
 tests/test_infer_io.py
+tests/test_learn_map.py
 tests/test_log_utils.py
 tests/test_manifolds_all.py
 tests/test_meshes_geodesics_smoke.py
